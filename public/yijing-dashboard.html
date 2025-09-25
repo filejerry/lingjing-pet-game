@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>易经状态机监控面板 - Spirit Pet Chronicles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hexagram-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .hexagram-symbol {
+            font-size: 4em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hexagram-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .hexagram-description {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .yao-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .yao-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+
+        .yao-item.chu-yao { border-left-color: #ff6b6b; }
+        .yao-item.er-yao { border-left-color: #feca57; }
+        .yao-item.san-yao { border-left-color: #48dbfb; }
+
+        .yao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .yao-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .yao-type {
+            font-size: 1.5em;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .yao-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .yao-detail {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            transition: width 0.3s ease;
+        }
+
+        .advice-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .advice-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #48dbfb;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-excellent { background: #2ecc71; }
+        .status-good { background: #f39c12; }
+        .status-fair { background: #e67e22; }
+        .status-poor { background: #e74c3c; }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🔮 易经状态机监控面板</h1>
+            <p>实时监控三层AI架构的动态演化状态</p>
+        </div>
+
+        <div id="loading" class="loading pulse">
+            正在加载状态机数据...
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- 当前卦象显示 -->
+            <div class="hexagram-display">
+                <div class="hexagram-symbol" id="hexagram-symbol">☰</div>
+                <div class="hexagram-name" id="hexagram-name">乾为天</div>
+                <div class="hexagram-description" id="hexagram-description">系统运行状态良好</div>
+            </div>
+
+            <div class="grid">
+                <!-- 三爻状态 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📊</span>
+                        <span>三爻状态寄存器</span>
+                    </div>
+                    <div class="yao-container" id="yao-container">
+                        <!-- 动态生成三爻状态 -->
+                    </div>
+                </div>
+
+                <!-- 系统指标 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📈</span>
+                        <span>系统指标</span>
+                    </div>
+                    <div class="metrics-grid" id="metrics-grid">
+                        <!-- 动态生成指标 -->
+                    </div>
+                </div>
+
+                <!-- 系统健康度 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>💚</span>
+                        <span>系统健康度</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="metric-value" id="health-score">85</div>
+                        <div class="metric-label">健康评分</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="health-progress"></div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <span class="status-indicator" id="health-indicator"></span>
+                            <span id="health-status">良好</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统建议 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>💡</span>
+                        <span>系统建议</span>
+                    </div>
+                    <ul class="advice-list" id="advice-list">
+                        <!-- 动态生成建议 -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="refreshData()">🔄 刷新数据</button>
+                <button class="btn btn-secondary" onclick="resetStateMachine()">🔄 重置状态机</button>
+                <button class="btn btn-secondary" onclick="toggleAutoRefresh()">⏱️ <span id="auto-refresh-text">开启自动刷新</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let isAutoRefresh = false;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+        });
+
+        // 刷新数据
+        async function refreshData() {
+            try {
+                const response = await fetch('/api/yijing/state');
+                const data = await response.json();
+                
+                updateDashboard(data);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('获取状态机数据失败:', error);
+                document.getElementById('loading').innerHTML = '❌ 数据加载失败，请检查服务器连接';
+            }
+        }
+
+        // 更新仪表板
+        function updateDashboard(data) {
+            // 更新卦象显示
+            updateHexagramDisplay(data.currentHexagram);
+            
+            // 更新三爻状态
+            updateYaoStates(data.stateRegister);
+            
+            // 更新系统指标
+            updateMetrics(data.lastMetrics);
+            
+            // 更新系统健康度
+            updateSystemHealth(data.systemHealth);
+            
+            // 更新系统建议（模拟）
+            updateSystemAdvice();
+        }
+
+        // 更新卦象显示
+        function updateHexagramDisplay(hexagram) {
+            const symbolMap = {
+                '乾为天': '☰',
+                '坤为地': '☷',
+                '离为火': '☲',
+                '坎为水': '☵',
+                '兑为泽': '☱',
+                '艮为山': '☶',
+                '震为雷': '☳',
+                '巽为风': '☴'
+            };
+
+            const hexagramName = hexagram.split(' ')[0];
+            const symbol = symbolMap[hexagramName] || '☰';
+            
+            document.getElementById('hexagram-symbol').textContent = symbol;
+            document.getElementById('hexagram-name').textContent = hexagramName;
+            document.getElementById('hexagram-description').textContent = hexagram.split(' - ')[1] || '系统运行正常';
+        }
+
+        // 更新三爻状态
+        function updateYaoStates(stateRegister) {
+            const yaoContainer = document.getElementById('yao-container');
+            yaoContainer.innerHTML = '';
+
+            const yaos = [
+                { key: 'sanYao', name: '三爻（判断层）', class: 'san-yao', layer: 'L3' },
+                { key: 'erYao', name: '二爻（进化层）', class: 'er-yao', layer: 'L2' },
+                { key: 'chuYao', name: '初爻（记录层）', class: 'chu-yao', layer: 'L1' }
+            ];
+
+            yaos.forEach(yao => {
+                const yaoData = stateRegister[yao.key];
+                const yaoElement = document.createElement('div');
+                yaoElement.className = `yao-item ${yao.class}`;
+                
+                yaoElement.innerHTML = `
+                    <div class="yao-header">
+                        <div class="yao-title">${yao.name}</div>
+                        <div class="yao-type">${yaoData.yaoType}</div>
+                    </div>
+                    <div class="yao-details">
+                        <div class="yao-detail">
+                            <div>位置</div>
+                            <div>${translatePosition(yaoData.position)}</div>
+                        </div>
+                        <div class="yao-detail">
+                            <div>动静</div>
+                            <div>${translateMovement(yaoData.movement)}</div>
+                        </div>
+                        <div class="yao-detail">
+                            <div>数值</div>
+                            <div>${getYaoValue(yaoData).toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+                
+                yaoContainer.appendChild(yaoElement);
+            });
+        }
+
+        // 更新系统指标
+        function updateMetrics(lastMetrics) {
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsGrid.innerHTML = '';
+
+            const metrics = [
+                { key: 'INNOVATION_SCORE', label: '创新度', value: lastMetrics.INNOVATION_SCORE || 0.5 },
+                { key: 'REPETITION_SCORE', label: '重复度', value: lastMetrics.REPETITION_SCORE || 0.5 },
+                { key: 'TONE', label: '情感倾向', value: lastMetrics.TONE || 0.5 },
+                { key: 'STRUCTURE_SCORE', label: '结构度', value: lastMetrics.STRUCTURE_SCORE || 0.5 },
+                { key: 'CREATIVITY_INDEX', label: '创造力', value: lastMetrics.CREATIVITY_INDEX || 0.5 },
+                { key: 'COHERENCE_LEVEL', label: '连贯性', value: lastMetrics.COHERENCE_LEVEL || 0.5 }
+            ];
+
+            metrics.forEach(metric => {
+                const metricElement = document.createElement('div');
+                metricElement.className = 'metric-item';
+                metricElement.innerHTML = `
+                    <div class="metric-value">${(metric.value * 100).toFixed(0)}%</div>
+                    <div class="metric-label">${metric.label}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${metric.value * 100}%"></div>
+                    </div>
+                `;
+                metricsGrid.appendChild(metricElement);
+            });
+        }
+
+        // 更新系统健康度
+        function updateSystemHealth(systemHealth) {
+            const score = systemHealth.score;
+            const status = systemHealth.status;
+            
+            document.getElementById('health-score').textContent = score;
+            document.getElementById('health-progress').style.width = score + '%';
+            
+            const statusMap = {
+                'excellent': { text: '优秀', class: 'status-excellent' },
+                'good': { text: '良好', class: 'status-good' },
+                'fair': { text: '一般', class: 'status-fair' },
+                'poor': { text: '较差', class: 'status-poor' }
+            };
+            
+            const statusInfo = statusMap[status] || statusMap.fair;
+            document.getElementById('health-status').textContent = statusInfo.text;
+            document.getElementById('health-indicator').className = `status-indicator ${statusInfo.class}`;
+        }
+
+        // 更新系统建议
+        function updateSystemAdvice() {
+            const adviceList = document.getElementById('advice-list');
+            const sampleAdvice = [
+                '✅ 系统运行正常，继续保持当前状态',
+                '🔄 建议定期检查L1层输入的多样性',
+                '⚖️ 系统阴阳平衡，适合进行常规任务处理',
+                '📊 监控L3层判断的一致性'
+            ];
+            
+            adviceList.innerHTML = '';
+            sampleAdvice.forEach(advice => {
+                const li = document.createElement('li');
+                li.className = 'advice-item';
+                li.textContent = advice;
+                adviceList.appendChild(li);
+            });
+        }
+
+        // 重置状态机
+        async function resetStateMachine() {
+            if (confirm('确定要重置易经状态机吗？这将清除所有当前状态。')) {
+                try {
+                    const response = await fetch('/api/yijing/reset', { method: 'POST' });
+                    const result = await response.json();
+                    alert(result.message);
+                    refreshData();
+                } catch (error) {
+                    alert('重置失败: ' + error.message);
+                }
+            }
+        }
+
+        // 切换自动刷新
+        function toggleAutoRefresh() {
+            if (isAutoRefresh) {
+                clearInterval(autoRefreshInterval);
+                isAutoRefresh = false;
+                document.getElementById('auto-refresh-text').textContent = '开启自动刷新';
+            } else {
+                autoRefreshInterval = setInterval(refreshData, 10000); // 每10秒刷新
+                isAutoRefresh = true;
+                document.getElementById('auto-refresh-text').textContent = '关闭自动刷新';
+            }
+        }
+
+        // 辅助函数
+        function translatePosition(position) {
+            const map = {
+                'lost': '失位',
+                'neutral': '中位',
+                'gained': '得位',
+                'imbalanced': '失衡',
+                'balanced': '平衡',
+                'unstable': '不稳',
+                'stable': '稳定'
+            };
+            return map[position] || position;
+        }
+
+        function translateMovement(movement) {
+            const map = {
+                'static': '静',
+                'dynamic': '动',
+                'stable': '稳',
+                'restructuring': '重构',
+                'steady': '稳',
+                'fluctuating': '波动'
+            };
+            return map[movement] || movement;
+        }
+
+        function getYaoValue(yaoData) {
+            return yaoData.innovation || yaoData.structure || yaoData.stability || 0;
+        }
+    </script>
+</body>
+</html>

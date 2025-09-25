@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 宝可梦风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* 主游戏屏幕 */
+        .game-screen {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 宠物展示区域 */
+        .pet-display {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+            position: relative;
+        }
+
+        .pet-avatar {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.3);
+            animation: float 3s ease-in-out infinite;
+            cursor: pointer;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pet-status {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #4ecdc4;
+            min-width: 200px;
+        }
+
+        .pet-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        .pet-stats {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .stat-bar {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+
+        /* 创建宠物按钮 */
+        .create-pet-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .create-pet-btn:hover {
+            transform: translate(-50%, -50%) translateY(-5px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 对话框系统 */
+        .dialogue-system {
+            height: 200px;
+            background: rgba(0,0,0,0.9);
+            border-top: 3px solid #4ecdc4;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialogue-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .dialogue-text {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* 输入区域 */
+        .input-area {
+            display: flex;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.5);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .pet-type-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #4ecdc4;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .pet-type-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .pet-type-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .send-btn {
+            padding: 10px 20px;
+            background: #4ecdc4;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+        }
+
+        /* 操作按钮 */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left: 4px solid #4ecdc4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 建议标签 */
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .suggestion-tag {
+            padding: 5px 10px;
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            border-radius: 15px;
+            font-size: 11px;
+            color: #4ecdc4;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-tag:hover {
+            background: rgba(78, 205, 196, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+            padding: 10px;
+            margin: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-screen">
+        <!-- 宠物展示区域 -->
+        <div class="pet-display">
+            <!-- 宠物状态面板 -->
+            <div class="pet-status" id="petStatus" style="display: none;">
+                <div class="pet-name" id="petName">我的宠物</div>
+                <div class="pet-stats">
+                    <div class="stat-bar">
+                        <span>生命值:</span>
+                        <span id="petHp">0</span>
+                    </div>
+                    <div class="stat-bar">
+                        <span>攻击力:</span>
+                        <span id="petAttack">0</span>
+                    </div>
+                    <div class="stat-bar">
+                        <span>防御力:</span>
+                        <span id="petDefense">0</span>
+                    </div>
+                    <div class="stat-bar">
+                        <span>速度:</span>
+                        <span id="petSpeed">0</span>
+                    </div>
+                    <div class="stat-bar">
+                        <span>魔力:</span>
+                        <span id="petMagic">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 宠物头像 -->
+            <div class="pet-avatar" id="petAvatar" style="display: none;">🐾</div>
+
+            <!-- 创建宠物按钮 -->
+            <button class="create-pet-btn" id="createPetBtn">🌟 召唤你的伙伴</button>
+
+            <!-- 加载动画 -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在召唤你的伙伴...</p>
+            </div>
+        </div>
+
+        <!-- 对话框系统 -->
+        <div class="dialogue-system">
+            <div class="dialogue-box" id="dialogueBox">
+                <div class="dialogue-text">🌟 欢迎来到灵境斗宠录！</div>
+                <div class="dialogue-text">在这里，你可以召唤属于自己的神奇伙伴。</div>
+                <div class="dialogue-text">请描述你心中理想的宠物，我会为你找到最合适的伙伴！</div>
+            </div>
+
+            <!-- 错误提示 -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- 建议标签 -->
+            <div class="suggestions">
+                <span class="suggestion-tag" onclick="fillInput('可爱的小猫')">可爱小猫</span>
+                <span class="suggestion-tag" onclick="fillInput('威武的龙')">威武巨龙</span>
+                <span class="suggestion-tag" onclick="fillInput('神秘的狐狸')">神秘狐狸</span>
+                <span class="suggestion-tag" onclick="fillInput('会飞的鸟')">飞行鸟类</span>
+                <span class="suggestion-tag" onclick="fillInput('海洋生物')">海洋伙伴</span>
+                <span class="suggestion-tag" onclick="fillInput('传说神兽')">传说神兽</span>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    class="pet-type-input" 
+                    id="petTypeInput" 
+                    placeholder="描述你想要的宠物类型..."
+                    maxlength="50"
+                >
+                <button class="send-btn" id="sendBtn">召唤</button>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button class="action-btn" onclick="petAction('feed')">🍖 喂食</button>
+                <button class="action-btn" onclick="petAction('play')">🎾 玩耍</button>
+                <button class="action-btn" onclick="petAction('train')">💪 训练</button>
+                <button class="action-btn" onclick="petAction('adventure')">🗺️ 冒险</button>
+                <button class="action-btn" onclick="petAction('battle')">⚔️ 战斗</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPet = null;
+        let userId = 'user_' + Date.now();
+
+        // DOM 元素
+        const createPetBtn = document.getElementById('createPetBtn');
+        const petAvatar = document.getElementById('petAvatar');
+        const petStatus = document.getElementById('petStatus');
+        const loading = document.getElementById('loading');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const petTypeInput = document.getElementById('petTypeInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const actionButtons = document.getElementById('actionButtons');
+
+        // 添加对话
+        function addDialogue(text, isUser = false) {
+            const dialogueText = document.createElement('div');
+            dialogueText.className = 'dialogue-text';
+            dialogueText.textContent = (isUser ? '👤 ' : '🤖 ') + text;
+            dialogueBox.appendChild(dialogueText);
+            dialogueBox.scrollTop = dialogueBox.scrollHeight;
+        }
+
+        // 显示错误
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        // 填充输入框
+        function fillInput(text) {
+            petTypeInput.value = text;
+            petTypeInput.focus();
+        }
+
+        // 创建宠物
+        async function createPet() {
+            const petType = petTypeInput.value.trim();
+            
+            if (!petType) {
+                showError('请描述你想要的宠物类型！');
+                return;
+            }
+
+            try {
+                // 显示加载状态
+                createPetBtn.style.display = 'none';
+                loading.style.display = 'block';
+                
+                addDialogue(`我想要：${petType}`, true);
+
+                const response = await fetch('/api/pets/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        petType: petType,
+                        petName: ''
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPet = data.pet;
+                    showPet(data);
+                    addDialogue(data.message);
+                    
+                    if (data.matchInfo && data.matchInfo.matchedKeywords && data.matchInfo.matchedKeywords.length > 0) {
+                        addDialogue(`匹配关键词: ${data.matchInfo.matchedKeywords.join('、')}`);
+                    }
+                } else {
+                    showError(data.error || '召唤失败，请重试');
+                    createPetBtn.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('创建宠物失败:', error);
+                showError('网络错误，请检查连接后重试');
+                createPetBtn.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                petTypeInput.value = '';
+            }
+        }
+
+        // 显示宠物
+        function showPet(data) {
+            const pet = data.pet;
+            
+            // 显示宠物头像和状态
+            petAvatar.style.display = 'flex';
+            petStatus.style.display = 'block';
+            actionButtons.style.display = 'flex';
+            
+            // 更新宠物信息
+            document.getElementById('petName').textContent = pet.name;
+            document.getElementById('petHp').textContent = pet.hp;
+            document.getElementById('petAttack').textContent = pet.attack;
+            document.getElementById('petDefense').textContent = pet.defense;
+            document.getElementById('petSpeed').textContent = pet.speed;
+            document.getElementById('petMagic').textContent = pet.magic;
+            
+            // 根据元素类型设置头像
+            const avatarEmojis = {
+                fire: '🔥', water: '💧', earth: '🌍', air: '💨', wind: '🌪️',
+                ice: '❄️', thunder: '⚡', light: '✨', dark: '🌙', shadow: '👤',
+                star: '⭐', moon: '🌙', crystal: '💎', divine: '👑', holy: '🕊️',
+                mystery: '❓', dream: '💭', cosmic: '🌌', rainbow: '🌈', illusion: '🎭'
+            };
+            
+            const avatar = avatarEmojis[pet.element_type] || '🐾';
+            petAvatar.textContent = avatar;
+            
+            // 保存到本地存储
+            localStorage.setItem('currentPet', JSON.stringify(pet));
+            localStorage.setItem('currentUserId', userId);
+        }
+
+        // 宠物行动
+        async function petAction(action) {
+            if (!currentPet) return;
+            
+            try {
+                addDialogue(`对 ${currentPet.name} 使用了 ${getActionName(action)}`, true);
+                
+                const response = await fetch(`/api/pets/${currentPet.id}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        target: 'self',
+                        context: { timestamp: new Date().toISOString() }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addDialogue(data.message);
+                    if (data.explanation) {
+                        addDialogue(data.explanation);
+                    }
+                } else {
+                    showError(data.error || '行动失败');
+                }
+            } catch (error) {
+                console.error('宠物行动失败:', error);
+                showError('网络错误，请重试');
+            }
+        }
+
+        // 获取行动名称
+        function getActionName(action) {
+            const actionNames = {
+                feed: '喂食',
+                play: '玩耍',
+                train: '训练',
+                adventure: '冒险',
+                battle: '战斗'
+            };
+            return actionNames[action] || action;
+        }
+
+        // 事件监听器
+        createPetBtn.addEventListener('click', createPet);
+        sendBtn.addEventListener('click', createPet);
+
+        petTypeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createPet();
+            }
+        });
+
+        // 检查是否已有宠物
+        window.addEventListener('load', () => {
+            const savedPet = localStorage.getItem('currentPet');
+            const savedUserId = localStorage.getItem('currentUserId');
+            
+            if (savedPet && savedUserId) {
+                try {
+                    currentPet = JSON.parse(savedPet);
+                    userId = savedUserId;
+                    
+                    showPet({ pet: currentPet });
+                    addDialogue(`欢迎回来！${currentPet.name} 很想念你！`);
+                } catch (error) {
+                    console.error('加载保存的宠物失败:', error);
+                }
+            }
+        });
+
+        // 宠物头像点击事件
+        petAvatar.addEventListener('click', () => {
+            if (currentPet) {
+                addDialogue(`${currentPet.name} 看起来很开心！`);
+                petAvatar.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    petAvatar.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+    </script>
+</body>
+</html>

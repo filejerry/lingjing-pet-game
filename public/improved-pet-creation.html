@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 智能召唤版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #0f1419 100%);
+            min-height: 100vh;
+            color: #e8edff;
+            overflow-x: hidden;
+        }
+
+        /* 星空背景动画 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 主容器 */
+        .game-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部标题 */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #a0a8cc;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* 宠物创建卡片 */
+        .creation-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #667eea;
+        }
+
+        /* 输入区域 */
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e8edff;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            color: #e8edff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-field::placeholder {
+            color: #a0a8cc;
+        }
+
+        /* 建议标签 */
+        .suggestions {
+            margin-top: 15px;
+        }
+
+        .suggestion-label {
+            font-size: 14px;
+            color: #a0a8cc;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .suggestion-tag {
+            padding: 6px 12px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-tag:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* 按钮样式 */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #e8edff;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 结果显示 */
+        .result-card {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pet-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pet-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .pet-description {
+            font-size: 16px;
+            color: #a0a8cc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .pet-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0a8cc;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .creation-card {
+                padding: 20px;
+                margin: 0 10px 20px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* 成功提示 */
+        .success-message {
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            color: #4ecdc4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+
+    <div class="game-container">
+        <!-- 顶部标题 -->
+        <div class="header">
+            <h1 class="title">灵境斗宠录</h1>
+            <p class="subtitle">智能召唤系统 - 描述你心中的理想伙伴</p>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="main-content">
+            <!-- 宠物创建卡片 -->
+            <div class="creation-card" id="creationCard">
+                <h2 class="card-title">🌟 召唤你的专属伙伴</h2>
+                
+                <div class="input-section">
+                    <label class="input-label" for="petType">描述你想要的宠物类型：</label>
+                    <input 
+                        type="text" 
+                        id="petType" 
+                        class="input-field" 
+                        placeholder="例如：可爱的小猫咪、威武的龙、神秘的狐狸..."
+                        maxlength="100"
+                    >
+                    
+                    <div class="suggestions">
+                        <div class="suggestion-label">💡 热门推荐：</div>
+                        <div class="suggestion-tags" id="suggestionTags">
+                            <span class="suggestion-tag">可爱的小猫</span>
+                            <span class="suggestion-tag">威武的龙</span>
+                            <span class="suggestion-tag">神秘的狐狸</span>
+                            <span class="suggestion-tag">会飞的鸟</span>
+                            <span class="suggestion-tag">海洋生物</span>
+                            <span class="suggestion-tag">传说神兽</span>
+                            <span class="suggestion-tag">萌萌的兔子</span>
+                            <span class="suggestion-tag">强大的狼</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <label class="input-label" for="petName">给它起个名字（可选）：</label>
+                    <input 
+                        type="text" 
+                        id="petName" 
+                        class="input-field" 
+                        placeholder="留空将使用默认名字..."
+                        maxlength="20"
+                    >
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="createBtn">🎯 智能匹配召唤</button>
+                    <button class="btn btn-secondary" id="randomBtn">🎲 随机神秘召唤</button>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <!-- 加载动画 -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在为你寻找最合适的伙伴...</p>
+            </div>
+
+            <!-- 结果显示 -->
+            <div class="result-card" id="resultCard">
+                <div class="pet-avatar" id="petAvatar">🐾</div>
+                <div class="pet-name" id="resultPetName">神秘伙伴</div>
+                <div class="pet-description" id="petDescription">一只神秘的生物正在等待与你相遇...</div>
+                
+                <div class="pet-stats" id="petStats">
+                    <div class="stat-item">
+                        <div class="stat-label">生命</div>
+                        <div class="stat-value" id="statHp">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">攻击</div>
+                        <div class="stat-value" id="statAttack">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">防御</div>
+                        <div class="stat-value" id="statDefense">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">速度</div>
+                        <div class="stat-value" id="statSpeed">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">魔力</div>
+                        <div class="stat-value" id="statMagic">0</div>
+                    </div>
+                </div>
+
+                <div class="success-message" id="successMessage"></div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="continueBtn">🎮 开始冒险</button>
+                    <button class="btn btn-secondary" id="recreateBtn">🔄 重新召唤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 生成星空背景
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // 页面加载时创建星空
+        createStars();
+
+        // 获取DOM元素
+        const petTypeInput = document.getElementById('petType');
+        const petNameInput = document.getElementById('petName');
+        const createBtn = document.getElementById('createBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const creationCard = document.getElementById('creationCard');
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+        const errorMessage = document.getElementById('errorMessage');
+        const continueBtn = document.getElementById('continueBtn');
+        const recreateBtn = document.getElementById('recreateBtn');
+
+        // 建议标签点击事件
+        document.getElementById('suggestionTags').addEventListener('click', (e) => {
+            if (e.target.classList.contains('suggestion-tag')) {
+                petTypeInput.value = e.target.textContent;
+                petTypeInput.focus();
+            }
+        });
+
+        // 创建宠物函数
+        async function createPet(petType = '', isRandom = false) {
+            try {
+                showLoading();
+                
+                const userId = 'user_' + Date.now(); // 简单的用户ID生成
+                const petName = petNameInput.value.trim();
+                
+                const requestBody = {
+                    userId: userId,
+                    petType: isRandom ? '' : petType,
+                    petName: petName
+                };
+
+                const response = await fetch('/api/pets/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(data);
+                } else {
+                    showError(data.error || '召唤失败，请重试');
+                }
+            } catch (error) {
+                console.error('创建宠物失败:', error);
+                showError('网络错误，请检查连接后重试');
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            creationCard.style.display = 'none';
+            resultCard.style.display = 'none';
+            loading.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        // 显示结果
+        function showResult(data) {
+            loading.style.display = 'none';
+            resultCard.style.display = 'block';
+            
+            const pet = data.pet;
+            const matchInfo = data.matchInfo;
+            
+            // 更新宠物信息
+            document.getElementById('resultPetName').textContent = pet.name;
+            document.getElementById('petDescription').textContent = pet.appearance || pet.base_prompt;
+            
+            // 更新属性
+            document.getElementById('statHp').textContent = pet.hp;
+            document.getElementById('statAttack').textContent = pet.attack;
+            document.getElementById('statDefense').textContent = pet.defense;
+            document.getElementById('statSpeed').textContent = pet.speed;
+            document.getElementById('statMagic').textContent = pet.magic;
+            
+            // 更新头像（根据元素类型选择emoji）
+            const avatarEmojis = {
+                fire: '🔥',
+                water: '💧',
+                earth: '🌍',
+                air: '💨',
+                wind: '🌪️',
+                ice: '❄️',
+                thunder: '⚡',
+                light: '✨',
+                dark: '🌙',
+                shadow: '👤',
+                star: '⭐',
+                moon: '🌙',
+                crystal: '💎',
+                divine: '👑',
+                holy: '🕊️',
+                mystery: '❓',
+                dream: '💭',
+                cosmic: '🌌',
+                rainbow: '🌈',
+                illusion: '🎭'
+            };
+            
+            const avatar = avatarEmojis[pet.element_type] || '🐾';
+            document.getElementById('petAvatar').textContent = avatar;
+            
+            // 显示成功消息
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = data.message;
+            
+            if (matchInfo && matchInfo.matchedKeywords && matchInfo.matchedKeywords.length > 0) {
+                successMsg.textContent += ` (匹配关键词: ${matchInfo.matchedKeywords.join('、')})`;
+            }
+            
+            // 保存宠物ID到本地存储
+            localStorage.setItem('currentPetId', pet.id);
+            localStorage.setItem('currentUserId', pet.user_id);
+        }
+
+        // 显示错误
+        function showError(message) {
+            loading.style.display = 'none';
+            creationCard.style.display = 'block';
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        // 事件监听器
+        createBtn.addEventListener('click', () => {
+            const petType = petTypeInput.value.trim();
+            if (!petType) {
+                showError('请描述你想要的宠物类型');
+                return;
+            }
+            createPet(petType, false);
+        });
+
+        randomBtn.addEventListener('click', () => {
+            createPet('', true);
+        });
+
+        continueBtn.addEventListener('click', () => {
+            // 跳转到主游戏界面
+            window.location.href = '/pokemon';
+        });
+
+        recreateBtn.addEventListener('click', () => {
+            resultCard.style.display = 'none';
+            creationCard.style.display = 'block';
+            petTypeInput.value = '';
+            petNameInput.value = '';
+            errorMessage.style.display = 'none';
+        });
+
+        // 回车键支持
+        petTypeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createBtn.click();
+            }
+        });
+
+        petNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createBtn.click();
+            }
+        });
+
+        // 检查是否已有宠物
+        window.addEventListener('load', async () => {
+            const currentPetId = localStorage.getItem('currentPetId');
+            if (currentPetId) {
+                // 如果已有宠物，询问是否直接进入游戏
+                if (confirm('检测到你已经有宠物了，是否直接进入游戏？')) {
+                    window.location.href = '/pokemon';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

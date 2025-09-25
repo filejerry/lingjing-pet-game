@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灵境斗宠录 · 文字对话版</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box }
+    :root {
+      --bg:#0f1220; --panel:rgba(255,255,255,0.08); --muted:#9bb0ff;
+      --accent:#7c9cff; --accent2:#b8ffda; --warn:#ffb86b; --danger:#ff6b6b; --ok:#79ffa1;
+      --text:#e8edff; --soft:#c7d2ff;
+    }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background:linear-gradient(160deg,#0b0e1a,#101538 60%,#0b0e1a); color:var(--text); min-height:100vh; }
+    .wrap { height:100vh; display:flex; flex-direction:column }
+    /* 顶部状态条 */
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:rgba(0,0,0,.35); border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter: blur(12px); }
+    .petMini { display:flex; align-items:center; gap:10px }
+    .egg { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,#6b7bff,#8aa9ff); box-shadow: 0 0 10px rgba(124,156,255,.35); }
+    .name { font-weight:700; letter-spacing:.5px }
+    .ap { background: rgba(124,156,255,.16); border:1px solid rgba(124,156,255,.35); padding:6px 10px; border-radius:16px; font-size:12px; }
+    /* 主对话舞台 */
+    .stage { flex:1; padding:16px 14px; overflow-y:auto; }
+    .msg { margin:10px 0; animation:fade .25s ease; line-height:1.6 }
+    .msg .from { font-size:12px; opacity:.8; margin-bottom:3px }
+    .msg .bubble { display:inline-block; padding:10px 12px; border-radius:12px; background:var(--panel); border:1px solid rgba(255,255,255,.08); white-space:pre-wrap }
+    .msg.system .bubble { color:var(--muted) }
+    .msg.user .bubble { border-color: rgba(124,156,255,.45); box-shadow: inset 0 0 0 1px rgba(124,156,255,.25) }
+    .msg.pet .bubble { border-color: rgba(184,255,218,.45); box-shadow: inset 0 0 0 1px rgba(184,255,218,.2) }
+    @keyframes fade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
+    /* 底部输入区 */
+    .dock { display:flex; gap:10px; padding:12px; border-top:1px solid rgba(255,255,255,.06); background:rgba(0,0,0,.35); backdrop-filter: blur(12px) }
+    .ipt { flex:1; background:var(--panel); border:1px solid rgba(255,255,255,.12); color:var(--text); padding:12px 14px; border-radius:12px; outline:none }
+    .send { width:46px; height:46px; border-radius:12px; border:1px solid rgba(124,156,255,.45); background:linear-gradient(135deg,#5d77ff,#6e9bff); color:white; cursor:pointer }
+    /* 右上角菜单按钮与侧抽屉 */
+    .menuBtn { position:fixed; top:14px; right:14px; width:42px; height:42px; border-radius:50%; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.5); color:#fff; cursor:pointer; z-index:10 }
+    .drawer { position:fixed; top:0; right:-280px; width:280px; height:100vh; background:rgba(10,13,27,.96); border-left:1px solid rgba(255,255,255,.08); transition:right .25s ease; z-index:9; padding:70px 14px 14px }
+    .drawer.open { right:0 }
+    .item { padding:12px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.04); border-radius:10px; margin:10px 0; cursor:pointer }
+    .item:hover { border-color: rgba(124,156,255,.45) }
+    .item .t { font-weight:700 }
+    .item .d { opacity:.75; font-size:12px; margin-top:4px }
+    /* 模态框 */
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(0,0,0,.55); z-index:20 }
+    .modal.open { display:flex }
+    .card { width:min(92vw,540px); max-height:80vh; overflow:auto; background: #0b0f24; border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:16px }
+    .card h3 { margin-bottom:8px }
+    .opt { padding:10px; border:1px dashed rgba(255,255,255,.15); border-radius:10px; margin:8px 0; cursor:pointer }
+    .opt:hover { border-color: var(--accent) }
+    .sub { font-size:12px; opacity:.75; margin-top:4px }
+    .okay { background: linear-gradient(135deg,#59d69f,#7af1bd); border:none; color:#0b0f24; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700 }
+    .ghost { background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--soft); padding:10px 12px; border-radius:10px; cursor:pointer; margin-left:8px }
+    .row { display:flex; gap:8px; margin-top:10px }
+    .muted { color:var(--muted) }
+    .hr { height:1px; background:rgba(255,255,255,.08); margin:10px 0 }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="petMini">
+        <div class="egg" id="petAvatar">🥚</div>
+        <div>
+          <div class="name" id="petName">未绑定宠物</div>
+          <div class="muted" id="petHint" style="font-size:12px">输入任意内容开始与灵宠建立联系</div>
+        </div>
+      </div>
+      <div class="ap">⚡ <span id="ap">--</span></div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="msg system"><div class="from">系统</div><div class="bubble">🌟 灵境已开启。这里一切皆由你的言语引导。</div></div>
+    </div>
+    <div id="worldBar" style="border-top:1px solid rgba(255,255,255,.06); background:rgba(0,0,0,.28); padding:8px 12px; font-size:12px; white-space:nowrap; overflow:hidden;">
+      <div id="worldTicker" style="display:inline-block; will-change: transform;"></div>
+    </div>
+
+    <div class="dock">
+      <input class="ipt" id="ipt" placeholder="对你的灵宠说点什么..." maxlength="120" />
+      <button class="send" id="btnSend">📤</button>
+    </div>
+  </div>
+
+  <button class="menuBtn" id="menuBtn">≡</button>
+  <div class="drawer" id="drawer">
+    <div class="item" id="actCreate">
+      <div class="t">孵化/绑定灵宠</div>
+      <div class="d">第一次来？一键创造属于你的伙伴</div>
+    </div>
+    <div class="item" id="actStatus">
+      <div class="t">查看状态</div>
+      <div class="d">稀有度/元素/基础能力与最近记事</div>
+    </div>
+    <div class="item" id="actBattle">
+      <div class="t">快速对战</div>
+      <div class="d">匹配试炼对手，文字战报+结算</div>
+    </div>
+    <div class="item" id="actAdventure">
+      <div class="t">托管奇遇</div>
+      <div class="d">后台探索，异步返回文字奇遇</div>
+    </div>
+    <div class="item" id="actHelp">
+      <div class="t">玩法说明</div>
+      <div class="d">行为→提示词→进化 的非线性成长</div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="card" id="modalCard"></div>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const ipt = document.getElementById('ipt');
+    const btnSend = document.getElementById('btnSend');
+    const petNameEl = document.getElementById('petName');
+    const petHintEl = document.getElementById('petHint');
+    const petAvatar = document.getElementById('petAvatar');
+    const apEl = document.getElementById('ap');
+    const menuBtn = document.getElementById('menuBtn');
+    const drawer = document.getElementById('drawer');
+    const modal = document.getElementById('modal');
+    const modalCard = document.getElementById('modalCard');
+
+    let state = { pet:null, ap:0, userId:'mobile-user' };
+
+    function addMsg(type, text) {
+      const div = document.createElement('div');
+      div.className = `msg ${type}`;
+      div.innerHTML = `<div class="from">${type==='user'?'你':(type==='pet'?(state.pet?.name||'灵宠'):'系统')}</div><div class="bubble">${escapeHtml(text)}</div>`;
+      stage.appendChild(div);
+      stage.scrollTop = stage.scrollHeight;
+    }
+    function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({ '&':'&','<':'<','>':'>','"':'"' }[c])) }
+
+    async function refreshAP(){
+      try {
+        const r = await fetch('/api/pets/activity-status'); const j = await r.json();
+        if(j.success){ state.ap=j.data.currentPoints; apEl.textContent = `${state.ap}/${j.data.maxPoints}`; }
+      } catch {}
+    }
+    async function loadPet(){
+      try{
+        const r = await fetch('/api/pets/user/'+state.userId);
+        const j = await r.json();
+        if(j.success && j.data.length){ state.pet=j.data[0]; syncPetMini(); }
+      }catch{}
+    }
+    function syncPetMini(){
+      if(!state.pet){ petNameEl.textContent='未绑定宠物'; petHintEl.textContent='输入任意内容开始与灵宠建立联系'; petAvatar.textContent='🥚'; return; }
+      petNameEl.textContent = state.pet.name;
+      petHintEl.textContent = `稀有度 ${state.pet.rarity||'N'} · 元素 ${state.pet.element||'neutral'}`;
+      const avMap={N:'🐣',R:'🐰',SR:'🦊',SSR:'🐉',SSS:'👑'};
+      petAvatar.textContent = avMap[state.pet.rarity] || '🐾';
+    }
+
+    async function createPetFlow(){
+      openModal(`
+        <h3>🐣 孵化/绑定</h3>
+        <div class="muted">为你的灵宠起一个名字（可留空随机）：</div>
+        <div class="row"><input class="ipt" id="newPetName" placeholder="如：彩风、星尘..."/></div>
+        <div class="row">
+          <button class="okay" onclick="confirmCreate()">孵化</button>
+          <button class="ghost" onclick="closeModal()">取消</button>
+        </div>
+      `);
+    }
+    async function confirmCreate(){
+      const name = (document.getElementById('newPetName').value||'').trim() || randomName();
+      try{
+        const r = await fetch('/api/pets/create',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: state.userId, petName: name })});
+        const j = await r.json();
+        if(j.success){ state.pet=j.data; syncPetMini(); addMsg('system',`✨ ${name} 在灵境中苏醒。`); pushWorldNews('hatch', {name, rarity: state.pet.rarity, elem: state.pet.element}); closeModal(); }
+        else addMsg('system','❌ 孵化失败，请稍后再试');
+      }catch{ addMsg('system','⚠️ 网络异常'); }
+    }
+    function randomName(){ const a=['小','灵','星','风','云','月','影','电','岚','曦']; const b=['火','水','风','土','光','暗','雷','云','星','月']; return a[Math.random()*a.length|0]+b[Math.random()*b.length|0] }
+
+    async function chatSend(){
+      const text = ipt.value.trim(); if(!text) return;
+      addMsg('user', text); ipt.value='';
+      if(!state.pet){ addMsg('pet','咕咕？（先孵化我吧！）'); return; }
+      try{
+        addMsg('pet','……（思考中）');
+        const r = await fetch(`/api/pets/${state.pet.id}/chat`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text })});
+        const j = await r.json();
+        // 替换最后一条“思考中”
+        stage.lastElementChild.querySelector('.bubble').textContent = (j.success ? j.data.petResponse.text : '嘤嘤...(稍后再聊)');
+      }catch{ stage.lastElementChild.querySelector('.bubble').textContent = '网络似乎不稳定…'; }
+    }
+
+    async function quickBattle(){
+      if(!state.pet){ addMsg('system','请先孵化灵宠'); return; }
+      addMsg('system','⚔️ 正在匹配对手...');
+      try{
+        const r = await fetch('/api/battle/matchmaking',{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: state.userId, petId: state.pet.id })});
+        const j = await r.json();
+        if(j.success){
+          const d=j.data;
+          addMsg('system','— 战斗开始 —');
+          addMsg('system', d.report.replace(/\n/g,'\n'));
+          const win = d.winner===state.pet.id;
+          addMsg('system', `结果：${win?'胜利':'落败'} · 评级 ${d.settlement.rating} · 回合 ${d.settlement.rounds} · 经验 +${d.settlement.exp} · 金币 +${d.settlement.gold}${d.settlement.drops?.length?(' · 掉落 '+d.settlement.drops.map(x=>x.name).join('、')):''}`);
+          pushWorldNews('battle', {pet: state.pet.name, win, rating: d.settlement.rating});
+        } else addMsg('system','匹配失败');
+      }catch{ addMsg('system','网络波动，稍后再试'); }
+    }
+
+    async function quickAdventure(){
+      if(!state.pet){ addMsg('system','请先孵化灵宠'); return; }
+      addMsg('system','🎒 托管奇遇已启动，稍后将有文字回信。');
+      try{
+        const r = await fetch('/api/pets/adventure/start',{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify({ petId: state.pet.id, durationMinutes: 60 })});
+        await r.json(); // 即使失败也不打断体验
+      }catch{}
+    }
+
+    function openStatus(){
+      if(!state.pet){ openModal('<h3>📊 状态</h3><div class="muted">尚未绑定灵宠</div>'); return; }
+      openModal(`
+        <h3>📊 ${state.pet.name}</h3>
+        <div class="hr"></div>
+        <div class="muted">稀有度：${state.pet.rarity||'N'} · 元素：${state.pet.element||'neutral'}</div>
+        <div class="sub">生命 ${state.pet.hp} · 攻击 ${state.pet.attack} · 防御 ${state.pet.defense} · 速度 ${state.pet.speed}</div>
+        <div class="hr"></div>
+        <div class="muted">最近记事将通过主舞台滚动展示。</div>
+        <div class="row"><button class="ghost" onclick="closeModal()">关闭</button></div>
+      `);
+    }
+
+    function openHelp(){
+      openModal(`
+        <h3>❓ 玩法说明</h3>
+        <div class="hr"></div>
+        <div class="muted">本作以“文字对话”为主。你的每次对话与选择，都会潜移默化影响二/三层提示词与词条固化（当前不直接改动战斗数值，已预留位）。</div>
+        <div class="sub">建议从孵化开始，尝试聊天、快速对战、托管奇遇。</div>
+        <div class="row"><button class="ghost" onclick="closeModal()">关闭</button></div>
+      `);
+    }
+
+    // UI helpers
+    function toggleDrawer(){ drawer.classList.toggle('open'); }
+    function openModal(html){ modalCard.innerHTML=html; modal.classList.add('open'); }
+    function closeModal(){ modal.classList.remove('open'); }
+    document.addEventListener('click', (e)=>{ if(modal.classList.contains('open') && e.target===modal) closeModal(); });
+
+    // events
+    btnSend.onclick = chatSend;
+    ipt.addEventListener('keypress', e=>{ if(e.key==='Enter') chatSend(); });
+    menuBtn.onclick = toggleDrawer;
+    document.getElementById('actCreate').onclick = ()=>{ toggleDrawer(); createPetFlow(); };
+    document.getElementById('actStatus').onclick = ()=>{ toggleDrawer(); openStatus(); };
+    document.getElementById('actBattle').onclick = ()=>{ toggleDrawer(); quickBattle(); };
+    document.getElementById('actAdventure').onclick = ()=>{ toggleDrawer(); quickAdventure(); };
+    document.getElementById('actHelp').onclick = ()=>{ toggleDrawer(); openHelp(); };
+
+    // init
+    (async function init(){
+      addMsg('system','✨ 欢迎来到“文字对话”主舞台。');
+      await Promise.all([refreshAP(), loadPet()]);
+      // 定时刷新 AP
+      setInterval(refreshAP, 30000);
+      startWorldTicker();
+      if(!state.pet){
+        addMsg('pet','咕咕…（我在等待诞生）');
+        addMsg('system','可在右上角“≡”孵化新宠。');
+      } else {
+        addMsg('pet','嘤嘤！(一起去看看这个世界吧)');
+      }
+    })();
+
+    // ================= 世界要闻 =================
+    const ticker = document.getElementById('worldTicker');
+    let newsQueue = [];
+    function pushWorldNews(type, payload={}){
+      const now = new Date().toLocaleTimeString();
+      const lines = {
+        hatch: () => `【${now}】玩家抽中 ${payload.rarity||'N'} 级灵宠「${payload.name}」· 元素 ${payload.elem||'neutral'}`,
+        evolve: () => `【${now}】「${payload.name}」逆天进化，获得新词条「${payload.trait||'神秘烈焰'}」`,
+        battle: () => `【${now}】「${payload.pet}」在比试中${payload.win?'豪取胜利':'惜败'} · 评级 ${payload.rating||'A'}`
+      };
+      const text = (lines[type] || (()=>`【${now}】灵境深处掀起涟漪…`))();
+      newsQueue.push(text);
+      renderTicker();
+    }
+    function renderTicker(){
+      const content = newsQueue.slice(-10).join('    |    ');
+      if (ticker) {
+        ticker.textContent = content || '灵境静候新的传说…';
+      }
+    }
+    function startWorldTicker(){
+      seedWorldNews();
+      renderTicker();
+      setInterval(()=>{ autoGenerateNews(); renderTicker(); }, 15000);
+    }
+    function seedWorldNews(){
+      const sample = [
+        '玩家「清风」抽中 SSS 级「九尾」· 元素 幻',
+        '「白泽」于昆仑悟道，词条「洞悉万象」觉醒',
+        '「赤焰雀」连胜三场，评级 S',
+        '玩家「玄月」在蓬莱遇秘使，获得「灵雾叶」'
+      ];
+      const now = new Date().toLocaleTimeString();
+      newsQueue.push(...sample.map(s=>`【${now}】${s}`));
+    }
+    function autoGenerateNews(){
+      const pets = ['青麟','彩风','夜魇','云岚','星渊','霜影','炎龙','沧鲤'];
+      const traits = ['神秘烈焰','冰心映月','雷霆万钧','风行无踪','灵木繁生','幽影缠绕'];
+      const rar = ['N','R','SR','SSR','SSS'];
+      const elem = ['fire','water','earth','air','light','dark','poison','ice'];
+      const pick = arr => arr[Math.random()*arr.length|0];
+      const kind = Math.random();
+      if(kind<0.34){
+        pushWorldNews('hatch',{name: pick(pets), rarity: pick(rar), elem: pick(elem)});
+      } else if(kind<0.67){
+        pushWorldNews('evolve',{name: pick(pets), trait: pick(traits)});
+      } else {
+        pushWorldNews('battle',{pet: pick(pets), win: Math.random()>0.5, rating: ['S','A','B'][Math.random()*3|0]});
+      }
+    }
+  </script>
+</body>
+</html>

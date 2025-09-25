@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 完整版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Microsoft YaHei', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 右上角背包 */
+        .bag-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(40, 40, 40, 0.9);
+            border: 2px solid #666;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .bag-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        /* 左上角宠物状态 */
+        .pet-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            z-index: 999;
+        }
+
+        /* 主要文字区域 - 完全居中 */
+        .text-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            height: 60%;
+            overflow-y: auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .text-line {
+            margin: 15px 0;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .title-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+            margin: 30px 0;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .normal-text { color: #e0e0e0; }
+        .important-text { color: #ffeb3b; font-weight: bold; }
+        .system-text { color: #4caf50; font-style: italic; }
+        .pet-text { color: #ff9800; }
+        .story-text { color: #9c27b0; font-style: italic; }
+
+        /* 选择区域 - 底部固定 */
+        .choice-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 15, 0.95);
+            border-top: 2px solid #666;
+            padding: 20px;
+            display: none;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .choice-prompt {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .choices-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .choice-button {
+            padding: 15px 20px;
+            background: rgba(40, 40, 40, 0.8);
+            border: 2px solid #666;
+            border-radius: 8px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .choice-button:hover {
+            background: rgba(60, 60, 60, 0.8);
+            border-color: #4caf50;
+            transform: translateY(-2px);
+        }
+
+        .choice-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .choice-desc {
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .choice-tags {
+            margin-top: 8px;
+        }
+
+        .trait-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 1px;
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 10px;
+            font-size: 10px;
+            color: #ffc107;
+        }
+
+        /* 继续按钮 */
+        .continue-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 30px;
+            background: rgba(76, 175, 80, 0.8);
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .continue-button:hover {
+            background: rgba(76, 175, 80, 1);
+            transform: translateY(-2px);
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #666;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #4caf50;
+            display: none;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+        }
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .text-display {
+                width: 95%;
+                height: 50%;
+                padding: 15px;
+            }
+            .choices-container {
+                grid-template-columns: 1fr;
+            }
+            .choice-area {
+                max-height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 背包 -->
+        <div class="bag-button" id="bagButton">🎒</div>
+        <div class="bag-panel" id="bagPanel">
+            <div style="font-weight: bold; margin-bottom: 15px; text-align: center;">背包</div>
+            <div id="bagContent">暂无物品</div>
+        </div>
+
+        <!-- 宠物状态 -->
+        <div class="pet-status" id="petStatus">
+            <div style="font-weight: bold; margin-bottom: 10px;" id="petName">我的伙伴</div>
+            <div style="font-size: 12px; margin: 3px 0;">生命: <span id="petHp">0</span></div>
+            <div style="font-size: 12px; margin: 3px 0;">攻击: <span id="petAttack">0</span></div>
+            <div style="font-size: 12px; margin: 3px 0;">防御: <span id="petDefense">0</span></div>
+            <div style="font-size: 12px; margin: 3px 0;">速度: <span id="petSpeed">0</span></div>
+            <div style="font-size: 12px; margin: 3px 0;">魔力: <span id="petMagic">0</span></div>
+            <div style="font-size: 12px; margin: 3px 0; color: #4caf50;">状态: <span id="petState">待命</span></div>
+        </div>
+
+        <!-- 文字显示区 -->
+        <div class="text-display" id="textDisplay">
+            <!-- 内容将动态生成 -->
+        </div>
+
+        <!-- 选择区域 -->
+        <div class="choice-area" id="choiceArea">
+            <div class="choice-prompt" id="choicePrompt">请选择你的行动：</div>
+            <div class="choices-container" id="choicesContainer">
+                <!-- 选择按钮将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 继续按钮 -->
+        <button class="continue-button" id="continueButton">开始冒险 ▶</button>
+
+        <!-- 状态指示器 -->
+        <div class="status-indicator" id="statusIndicator">系统就绪</div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = 'intro';
+        let currentPet = null;
+        let userId = 'user_' + Date.now();
+        let gameStage = 1;
+        let playerLevel = 1;
+        let storyProgress = 0;
+        let autoMode = false;
+
+        // DOM 元素
+        const textDisplay = document.getElementById('textDisplay');
+        const choiceArea = document.getElementById('choiceArea');
+        const choicesContainer = document.getElementById('choicesContainer');
+        const choicePrompt = document.getElementById('choicePrompt');
+        const continueButton = document.getElementById('continueButton');
+        const petStatus = document.getElementById('petStatus');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        // 种族剧情系统
+        const raceStories = {
+            '龙族': {
+                intro: "古老的龙族血脉在你的伙伴体内觉醒，它天生拥有强大的魔法天赋...",
+                events: [
+                    "你的龙族伙伴感受到了远古龙穴的召唤",
+                    "一位龙族长老出现，要测试你伙伴的血脉纯度",
+                    "你们发现了一处被遗忘的龙族宝藏"
+                ]
+            },
+            '猫科': {
+                intro: "优雅的猫科血统让你的伙伴拥有敏锐的直觉和灵活的身手...",
+                events: [
+                    "你的猫科伙伴在月圆之夜展现出神秘的能力",
+                    "一群野生猫科动物邀请你的伙伴加入它们的狩猎",
+                    "你们遇到了传说中的猫族守护神"
+                ]
+            },
+            '犬科': {
+                intro: "忠诚的犬科天性让你的伙伴成为最可靠的战友...",
+                events: [
+                    "你的犬科伙伴嗅到了危险的气息，保护了你们",
+                    "一位流浪的训练师想要挑战你的伙伴",
+                    "你们帮助了一个迷路的小孩，获得了村民的感谢"
+                ]
+            }
+        };
+
+        // 奇遇事件系统
+        const randomEvents = [
+            {
+                title: "神秘商人",
+                desc: "一位神秘的商人出现在你面前，他的货物散发着奇异的光芒...",
+                choices: [
+                    { text: "购买神秘药水", effect: "获得强化药水", cost: "金币" },
+                    { text: "询问消息", effect: "获得情报", cost: "无" },
+                    { text: "离开", effect: "安全离开", cost: "无" }
+                ]
+            },
+            {
+                title: "古老遗迹",
+                desc: "你们发现了一座被藤蔓覆盖的古老遗迹，里面传来微弱的光芒...",
+                choices: [
+                    { text: "探索遗迹", effect: "可能获得宝物或遇到危险", cost: "体力" },
+                    { text: "记录位置", effect: "标记地点，以后再来", cost: "无" },
+                    { text: "绕道而行", effect: "安全通过", cost: "时间" }
+                ]
+            },
+            {
+                title: "野生挑战者",
+                desc: "一只强大的野生灵兽向你们发起挑战，它的眼中燃烧着战斗的渴望...",
+                choices: [
+                    { text: "接受挑战", effect: "战斗获胜可获得经验", cost: "风险" },
+                    { text: "尝试沟通", effect: "可能和平解决", cost: "魅力" },
+                    { text: "战略撤退", effect: "安全离开但失去机会", cost: "声望" }
+                ]
+            }
+        ];
+
+        // 宠物类型数据
+        const petTypes = {
+            elements: ['火焰', '冰霜', '雷电', '大地', '风暴', '光明', '黑暗', '自然'],
+            personalities: ['温和', '活泼', '冷静', '勇敢', '狡猾', '忠诚', '神秘', '高傲'],
+            forms: ['龙族', '猫科', '犬科', '鸟类', '精灵', '兽人', '元素体', '幻兽']
+        };
+
+        // 开场故事
+        const introStory = [
+            { text: "灵境斗宠录", type: "title" },
+            { text: "在遥远的灵境大陆，每个人都能与灵兽建立契约...", type: "normal" },
+            { text: "你，作为新觉醒的灵兽师，即将开始自己的冒险。", type: "normal" },
+            { text: "首先，你需要召唤属于自己的第一只伙伴。", type: "important" }
+        ];
+
+        // 显示文字
+        async function addText(text, type = 'normal', delay = 1000) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = `text-line ${type}-text`;
+                    line.textContent = text;
+                    textDisplay.appendChild(line);
+                    textDisplay.scrollTop = textDisplay.scrollHeight;
+                    resolve();
+                }, delay);
+            });
+        }
+
+        // 显示加载
+        function showLoading(text = "处理中") {
+            const loading = document.createElement('div');
+            loading.className = 'text-line system-text';
+            loading.innerHTML = `${text}<span class="loading"></span>`;
+            loading.id = 'loading';
+            textDisplay.appendChild(loading);
+            textDisplay.scrollTop = textDisplay.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        }
+
+        // 生成宠物选择
+        function generatePetChoices() {
+            const choices = [];
+            for (let i = 0; i < 6; i++) {
+                const element = petTypes.elements[Math.floor(Math.random() * petTypes.elements.length)];
+                const personality = petTypes.personalities[Math.floor(Math.random() * petTypes.personalities.length)];
+                const form = petTypes.forms[Math.floor(Math.random() * petTypes.forms.length)];
+                
+                choices.push({
+                    title: `${element}系${personality}的${form}`,
+                    desc: `拥有${element}属性，性格${personality}，形态为${form}的灵兽`,
+                    value: `${element} ${personality} ${form}`,
+                    tags: [element, personality, form]
+                });
+            }
+            return choices;
+        }
+
+        // 生成游戏选择
+        function generateGameChoices() {
+            const baseChoices = [
+                {
+                    title: "🍖 喂食伙伴",
+                    desc: "给伙伴提供食物，恢复体力和心情",
+                    value: "feed"
+                },
+                {
+                    title: "🎾 陪伴玩耍", 
+                    desc: "与伙伴互动游戏，增进感情",
+                    value: "play"
+                },
+                {
+                    title: "💪 技能训练",
+                    desc: "训练伙伴的战斗技能",
+                    value: "train"
+                },
+                {
+                    title: "🗺️ 外出探索",
+                    desc: "带伙伴探索未知区域，寻找奇遇",
+                    value: "explore"
+                },
+                {
+                    title: "⚔️ 寻找战斗",
+                    desc: "寻找对手进行战斗，获得经验",
+                    value: "battle"
+                },
+                {
+                    title: "🧘 冥想休息",
+                    desc: "让伙伴休息，自动挂机历练",
+                    value: "auto"
+                }
+            ];
+
+            // 根据游戏进度添加特殊选择
+            if (gameStage >= 2) {
+                baseChoices.push({
+                    title: "🏛️ 访问公会",
+                    desc: "前往灵兽师公会，接受任务",
+                    value: "guild"
+                });
+            }
+
+            if (gameStage >= 3) {
+                baseChoices.push({
+                    title: "🌟 进化仪式",
+                    desc: "尝试让伙伴进化到更高形态",
+                    value: "evolve"
+                });
+            }
+
+            return baseChoices;
+        }
+
+        // 显示选择
+        function showChoices(choices, prompt = "请选择：") {
+            choicePrompt.textContent = prompt;
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                
+                let html = `<div class="choice-title">${choice.title}</div>`;
+                if (choice.desc) {
+                    html += `<div class="choice-desc">${choice.desc}</div>`;
+                }
+                if (choice.tags) {
+                    html += `<div class="choice-tags">`;
+                    choice.tags.forEach(tag => {
+                        html += `<span class="trait-tag">${tag}</span>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                button.innerHTML = html;
+                button.onclick = () => handleChoice(choice, index);
+                choicesContainer.appendChild(button);
+            });
+            
+            choiceArea.style.display = 'block';
+        }
+
+        function hideChoices() {
+            choiceArea.style.display = 'none';
+        }
+
+        // 处理选择
+        async function handleChoice(choice, index) {
+            hideChoices();
+            
+            if (gameState === 'pet-selection') {
+                await handlePetCreation(choice);
+            } else if (gameState === 'game') {
+                await handleGameAction(choice);
+            }
+        }
+
+        // 处理宠物创建
+        async function handlePetCreation(choice) {
+            await addText(`你在心中描绘：${choice.title}`, 'normal');
+            showLoading("灵境回应中");
+            
+            try {
+                const response = await fetch('/api/pets/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        petType: choice.value,
+                        petName: ''
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    currentPet = data.pet;
+                    await showPetResult(data, choice);
+                    startGame();
+                } else {
+                    await addText("召唤失败，请重试...", 'system');
+                    showPetSelection();
+                }
+            } catch (error) {
+                hideLoading();
+                await addText("连接中断，请稍后重试...", 'system');
+                showPetSelection();
+            }
+        }
+
+        // 显示宠物结果
+        async function showPetResult(data, choice) {
+            const pet = data.pet;
+            
+            await addText("光芒闪过，你的伙伴出现了！", 'system');
+            await addText(`${pet.appearance}`, 'normal');
+            await addText(`你决定称呼它为"${pet.name}"`, 'pet');
+            
+            // 显示种族剧情
+            const raceType = choice.tags.find(tag => raceStories[tag]);
+            if (raceType && raceStories[raceType]) {
+                await addText(raceStories[raceType].intro, 'story');
+            }
+            
+            await addText("契约建立！冒险即将开始...", 'important');
+            
+            updatePetStatus(pet);
+            petStatus.style.display = 'block';
+        }
+
+        // 处理游戏行动
+        async function handleGameAction(choice) {
+            await addText(`你决定：${choice.title}`, 'normal');
+            
+            if (choice.value === 'auto') {
+                await startAutoMode();
+                return;
+            }
+            
+            if (choice.value === 'explore') {
+                // 随机奇遇
+                if (Math.random() < 0.3) {
+                    await triggerRandomEvent();
+                    return;
+                }
+            }
+            
+            showLoading("执行中");
+            
+            try {
+                const response = await fetch(`/api/pets/${currentPet.id}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: choice.value,
+                        target: 'self',
+                        context: { userAction: choice.title }
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    await addText(data.message, 'system');
+                    if (data.explanation) {
+                        await addText(data.explanation, 'system');
+                    }
+                    
+                    // 检查是否触发特殊事件
+                    await checkSpecialEvents();
+                } else {
+                    await addText("行动失败了...", 'system');
+                }
+            } catch (error) {
+                hideLoading();
+                await addText("发生了未知错误...", 'system');
+            }
+            
+            // 继续游戏
+            setTimeout(() => {
+                const choices = generateGameChoices();
+                showChoices(choices, "接下来做什么？");
+            }, 2000);
+        }
+
+        // 自动挂机模式
+        async function startAutoMode() {
+            autoMode = true;
+            await addText("伙伴开始自动历练...", 'system');
+            document.getElementById('petState').textContent = '挂机中';
+            statusIndicator.textContent = '自动模式';
+            statusIndicator.style.display = 'block';
+            
+            // 显示退出自动模式的选择
+            setTimeout(() => {
+                showChoices([
+                    {
+                        title: "🎮 退出挂机",
+                        desc: "结束自动模式，重新手动控制",
+                        value: "manual"
+                    },
+                    {
+                        title: "⚔️ 前往战斗",
+                        desc: "寻找强敌进行实战",
+                        value: "battle"
+                    }
+                ], "伙伴正在自动历练中...");
+            }, 3000);
+        }
+
+        // 随机奇遇
+        async function triggerRandomEvent() {
+            const event = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+            
+            await addText(`🌟 奇遇：${event.title}`, 'important');
+            await addText(event.desc, 'story');
+            
+            const choices = event.choices.map(choice => ({
+                title: choice.text,
+                desc: `${choice.effect} (消耗：${choice.cost})`,
+                value: choice.text
+            }));
+            
+            showChoices(choices, "你的选择是？");
+        }
+
+        // 检查特殊事件
+        async function checkSpecialEvents() {
+            // 根据种族触发特殊剧情
+            if (currentPet && Math.random() < 0.2) {
+                const petForm = currentPet.pet_type.split(' ').find(part => raceStories[part]);
+                if (petForm && raceStories[petForm]) {
+                    const events = raceStories[petForm].events;
+                    const event = events[Math.floor(Math.random() * events.length)];
+                    await addText(`🎭 ${event}`, 'story');
+                }
+            }
+        }
+
+        // 更新宠物状态
+        function updatePetStatus(pet) {
+            document.getElementById('petName').textContent = pet.name;
+            document.getElementById('petHp').textContent = pet.hp;
+            document.getElementById('petAttack').textContent = pet.attack;
+            document.getElementById('petDefense').textContent = pet.defense;
+            document.getElementById('petSpeed').textContent = pet.speed;
+            document.getElementById('petMagic').textContent = pet.magic;
+        }
+
+        // 播放开场
+        async function playIntro() {
+            for (const story of introStory) {
+                await addText(story.text, story.type);
+            }
+            gameState = 'pet-selection';
+            showPetSelection();
+        }
+
+        // 显示宠物选择
+        function showPetSelection() {
+            setTimeout(async () => {
+                await addText("感受内心的呼唤，选择你的伙伴类型：", 'system');
+                const choices = generatePetChoices();
+                showChoices(choices, "选择你心中理想的伙伴：");
+            }, 1000);
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState = 'game';
+            setTimeout(async () => {
+                await addText("=== 冒险开始 ===", 'title');
+                await addText(`${currentPet.name}好奇地看着周围...`, 'pet');
+                
+                const choices = generateGameChoices();
+                showChoices(choices, "选择你的第一个行动：");
+            }, 2000);
+        }
+
+        // 事件监听
+        continueButton.onclick = () => {
+            if (gameState === 'intro') {
+                playIntro();
+                continueButton.style.display = 'none';
+            }
+        };
+
+        // 背包功能
+        document.getElementById('bagButton').onclick = () => {
+            const panel = document.getElementById('bagPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        };
+
+        // 初始化
+        window.onload = () => {
+            gameState = 'intro';
+            statusIndicator.style.display = 'block';
+            
+            // 检查保存的游戏
+            const saved = localStorage.getItem('currentPet');
+            if (saved) {
+                try {
+                    currentPet = JSON.parse(saved);
+                    gameState = 'game';
+                    continueButton.style.display = 'none';
+                    
+                    addText("欢迎回到灵境斗宠录", 'title');
+                    addText(`${currentPet.name}很高兴再次见到你！`, 'pet');
+                    
+                    updatePetStatus(currentPet);
+                    petStatus.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        const choices = generateGameChoices();
+                        showChoices(choices, "继续你的冒险：");
+                    }, 3000);
+                } catch (e) {
+                    console.error('加载失败:', e);
+                }
+            }
+        };
+
+        // 自动保存
+        setInterval(() => {
+            if (currentPet) {
+                localStorage.setItem('currentPet', JSON.stringify(currentPet));
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

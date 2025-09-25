@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 多宠物版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Microsoft YaHei', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 宠物队伍面板 - 左上角 */
+        .team-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 250px;
+            max-width: 300px;
+            z-index: 999;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .team-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #666;
+            padding-bottom: 8px;
+        }
+
+        .pet-slot {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(40, 40, 40, 0.8);
+            border: 2px solid #666;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pet-slot.active {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .pet-slot.empty {
+            border-style: dashed;
+            border-color: #888;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+        }
+
+        .pet-slot:hover:not(.empty) {
+            border-color: #4caf50;
+            transform: translateY(-1px);
+        }
+
+        .pet-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .pet-level {
+            font-size: 12px;
+            color: #4caf50;
+            margin-bottom: 3px;
+        }
+
+        .pet-exp-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(100, 100, 100, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .pet-exp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.3s ease;
+        }
+
+        .pet-stats {
+            font-size: 10px;
+            color: #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pet-type {
+            font-size: 10px;
+            color: #ff9800;
+            margin-top: 3px;
+        }
+
+        /* 右上角背包 */
+        .bag-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(40, 40, 40, 0.9);
+            border: 2px solid #666;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        /* 主要文字区域 - 完全居中 */
+        .text-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 700px;
+            height: 50%;
+            overflow-y: auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .text-line {
+            margin: 15px 0;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .title-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+            margin: 30px 0;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .normal-text { color: #e0e0e0; }
+        .important-text { color: #ffeb3b; font-weight: bold; }
+        .system-text { color: #4caf50; font-style: italic; }
+        .pet-text { color: #ff9800; }
+        .story-text { color: #9c27b0; font-style: italic; }
+        .level-up-text { color: #ffc107; font-weight: bold; }
+
+        /* 选择区域 - 底部固定 */
+        .choice-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 15, 0.95);
+            border-top: 2px solid #666;
+            padding: 20px;
+            display: none;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .choice-prompt {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .choices-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .choice-button {
+            padding: 15px 20px;
+            background: rgba(40, 40, 40, 0.8);
+            border: 2px solid #666;
+            border-radius: 8px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .choice-button:hover {
+            background: rgba(60, 60, 60, 0.8);
+            border-color: #4caf50;
+            transform: translateY(-2px);
+        }
+
+        .choice-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .choice-desc {
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .choice-tags {
+            margin-top: 8px;
+        }
+
+        .trait-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 1px;
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 10px;
+            font-size: 10px;
+            color: #ffc107;
+        }
+
+        /* 继续按钮 */
+        .continue-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 30px;
+            background: rgba(76, 175, 80, 0.8);
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .continue-button:hover {
+            background: rgba(76, 175, 80, 1);
+            transform: translateY(-2px);
+        }
+
+        /* 新宠物解锁提示 */
+        .unlock-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 193, 7, 0.95);
+            color: #000;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+        }
+
+        .unlock-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+        }
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .team-panel {
+                left: 10px;
+                top: 10px;
+                min-width: 200px;
+                max-width: 250px;
+            }
+            .text-display {
+                width: 90%;
+                height: 40%;
+                padding: 15px;
+            }
+            .choices-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 宠物队伍面板 -->
+        <div class="team-panel" id="teamPanel">
+            <div class="team-title">我的伙伴队伍</div>
+            <div id="petSlots">
+                <!-- 宠物槽位将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 背包按钮 -->
+        <div class="bag-button" id="bagButton">🎒</div>
+
+        <!-- 文字显示区 -->
+        <div class="text-display" id="textDisplay">
+            <!-- 内容将动态生成 -->
+        </div>
+
+        <!-- 选择区域 -->
+        <div class="choice-area" id="choiceArea">
+            <div class="choice-prompt" id="choicePrompt">请选择你的行动：</div>
+            <div class="choices-container" id="choicesContainer">
+                <!-- 选择按钮将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 继续按钮 -->
+        <button class="continue-button" id="continueButton">开始冒险 ▶</button>
+
+        <!-- 新宠物解锁通知 -->
+        <div class="unlock-notification" id="unlockNotification">
+            <div id="unlockMessage">🎉 可以获得新伙伴了！</div>
+            <button class="unlock-button" id="unlockButton">召唤新伙伴</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = 'intro';
+        let currentTeam = [];
+        let activePet = null;
+        let userId = 'user_' + Date.now();
+        let gameStage = 1;
+        let canGetNewPet = false;
+
+        // DOM 元素
+        const textDisplay = document.getElementById('textDisplay');
+        const choiceArea = document.getElementById('choiceArea');
+        const choicesContainer = document.getElementById('choicesContainer');
+        const choicePrompt = document.getElementById('choicePrompt');
+        const continueButton = document.getElementById('continueButton');
+        const teamPanel = document.getElementById('teamPanel');
+        const petSlots = document.getElementById('petSlots');
+        const unlockNotification = document.getElementById('unlockNotification');
+
+        // 宠物类型数据
+        const petTypes = {
+            elements: ['火焰', '冰霜', '雷电', '大地', '风暴', '光明', '黑暗', '自然'],
+            personalities: ['温和', '活泼', '冷静', '勇敢', '狡猾', '忠诚', '神秘', '高傲'],
+            forms: ['龙族', '猫科', '犬科', '鸟类', '精灵', '兽人', '元素体', '幻兽']
+        };
+
+        // 开场故事
+        const introStory = [
+            { text: "灵境斗宠录 - 多宠物版", type: "title" },
+            { text: "在这个神奇的世界里，灵兽师可以与多个伙伴建立契约...", type: "normal" },
+            { text: "当你的第一个伙伴达到10级时，就能召唤第二个伙伴。", type: "important" },
+            { text: "最多可以拥有5个伙伴，组成强大的队伍！", type: "important" },
+            { text: "现在，让我们开始你的多宠物冒险之旅吧！", type: "normal" }
+        ];
+
+        // 显示文字
+        async function addText(text, type = 'normal', delay = 1000) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = `text-line ${type}-text`;
+                    line.textContent = text;
+                    textDisplay.appendChild(line);
+                    textDisplay.scrollTop = textDisplay.scrollHeight;
+                    resolve();
+                }, delay);
+            });
+        }
+
+        // 显示加载
+        function showLoading(text = "处理中") {
+            const loading = document.createElement('div');
+            loading.className = 'text-line system-text';
+            loading.innerHTML = `${text}<span class="loading"></span>`;
+            loading.id = 'loading';
+            textDisplay.appendChild(loading);
+            textDisplay.scrollTop = textDisplay.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        }
+
+        // 更新宠物队伍显示
+        function updateTeamDisplay() {
+            petSlots.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'pet-slot';
+                
+                if (i < currentTeam.length) {
+                    const pet = currentTeam[i];
+                    const isActive = activePet && activePet.id === pet.id;
+                    
+                    if (isActive) {
+                        slot.classList.add('active');
+                    }
+                    
+                    const expProgress = (pet.experience / pet.max_experience * 100) || 0;
+                    
+                    slot.innerHTML = `
+                        <div class="pet-name">${pet.name}</div>
+                        <div class="pet-level">等级 ${pet.level}</div>
+                        <div class="pet-exp-bar">
+                            <div class="pet-exp-fill" style="width: ${expProgress}%"></div>
+                        </div>
+                        <div class="pet-stats">
+                            <span>HP:${pet.hp}</span>
+                            <span>ATK:${pet.attack}</span>
+                            <span>DEF:${pet.defense}</span>
+                        </div>
+                        <div class="pet-type">${pet.pet_type}</div>
+                    `;
+                    
+                    slot.onclick = () => switchActivePet(pet.id);
+                } else {
+                    slot.classList.add('empty');
+                    if (i === currentTeam.length && canGetNewPet) {
+                        slot.innerHTML = '点击召唤新伙伴';
+                        slot.onclick = () => showNewPetSelection();
+                    } else {
+                        slot.innerHTML = `槽位 ${i + 1}<br>未解锁`;
+                    }
+                }
+                
+                petSlots.appendChild(slot);
+            }
+        }
+
+        // 获取队伍状态
+        async function loadTeamStatus() {
+            try {
+                const response = await fetch(`/api/multi-pets/team/${userId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTeam = data.team.pets;
+                    activePet = data.team.activePet;
+                    canGetNewPet = data.team.canGetNewPet;
+                    updateTeamDisplay();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('加载队伍状态失败:', error);
+                return false;
+            }
+        }
+
+        // 切换活跃宠物
+        async function switchActivePet(petId) {
+            try {
+                const response = await fetch('/api/multi-pets/switch-active', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, petId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    activePet = data.activePet;
+                    await addText(data.message, 'system');
+                    updateTeamDisplay();
+                }
+            } catch (error) {
+                console.error('切换宠物失败:', error);
+            }
+        }
+
+        // 生成宠物选择
+        function generatePetChoices() {
+            const choices = [];
+            for (let i = 0; i < 6; i++) {
+                const element = petTypes.elements[Math.floor(Math.random() * petTypes.elements.length)];
+                const personality = petTypes.personalities[Math.floor(Math.random() * petTypes.personalities.length)];
+                const form = petTypes.forms[Math.floor(Math.random() * petTypes.forms.length)];
+                
+                choices.push({
+                    title: `${element}系${personality}的${form}`,
+                    desc: `拥有${element}属性，性格${personality}，形态为${form}的灵兽`,
+                    value: `${element} ${personality} ${form}`,
+                    tags: [element, personality, form]
+                });
+            }
+            return choices;
+        }
+
+        // 生成游戏选择
+        function generateGameChoices() {
+            const baseChoices = [
+                {
+                    title: "🍖 喂食伙伴",
+                    desc: "给活跃伙伴提供食物，恢复体力和心情",
+                    value: "feed"
+                },
+                {
+                    title: "🎾 陪伴玩耍", 
+                    desc: "与活跃伙伴互动游戏，增进感情",
+                    value: "play"
+                },
+                {
+                    title: "💪 技能训练",
+                    desc: "训练活跃伙伴的战斗技能，获得经验",
+                    value: "train"
+                },
+                {
+                    title: "🗺️ 外出探索",
+                    desc: "带伙伴探索未知区域，寻找奇遇",
+                    value: "explore"
+                },
+                {
+                    title: "⚔️ 寻找战斗",
+                    desc: "寻找对手进行战斗，获得大量经验",
+                    value: "battle"
+                },
+                {
+                    title: "🧘 冥想休息",
+                    desc: "让伙伴休息，自动挂机历练",
+                    value: "auto"
+                }
+            ];
+
+            // 如果可以获得新宠物，添加召唤选项
+            if (canGetNewPet) {
+                baseChoices.push({
+                    title: "✨ 召唤新伙伴",
+                    desc: "召唤一个新的伙伴加入队伍",
+                    value: "summon_new"
+                });
+            }
+
+            return baseChoices;
+        }
+
+        // 显示选择
+        function showChoices(choices, prompt = "请选择：") {
+            choicePrompt.textContent = prompt;
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                
+                let html = `<div class="choice-title">${choice.title}</div>`;
+                if (choice.desc) {
+                    html += `<div class="choice-desc">${choice.desc}</div>`;
+                }
+                if (choice.tags) {
+                    html += `<div class="choice-tags">`;
+                    choice.tags.forEach(tag => {
+                        html += `<span class="trait-tag">${tag}</span>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                button.innerHTML = html;
+                button.onclick = () => handleChoice(choice, index);
+                choicesContainer.appendChild(button);
+            });
+            
+            choiceArea.style.display = 'block';
+        }
+
+        function hideChoices() {
+            choiceArea.style.display = 'none';
+        }
+
+        // 处理选择
+        async function handleChoice(choice, index) {
+            hideChoices();
+            
+            if (gameState === 'pet-selection') {
+                await handlePetCreation(choice);
+            } else if (gameState === 'game') {
+                if (choice.value === 'summon_new') {
+                    showNewPetSelection();
+                } else {
+                    await handleGameAction(choice);
+                }
+            }
+        }
+
+        // 显示新宠物选择
+        function showNewPetSelection() {
+            gameState = 'pet-selection';
+            const choices = generatePetChoices();
+            showChoices(choices, "选择你的新伙伴类型：");
+        }
+
+        // 处理宠物创建
+        async function handlePetCreation(choice) {
+            await addText(`你在心中描绘新的伙伴：${choice.title}`, 'normal');
+            showLoading("灵境回应中");
+            
+            try {
+                const isFirstPet = currentTeam.length === 0;
+                const endpoint = isFirstPet ? '/api/pets/create' : '/api/multi-pets/create-new';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        petType: choice.value,
+                        petName: ''
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    await showPetResult(data, choice, isFirstPet);
+                    await loadTeamStatus();
+                    
+                    if (isFirstPet) {
+                        startGame();
+                    } else {
+                        gameState = 'game';
+                        setTimeout(() => {
+                            const choices = generateGameChoices();
+                            showChoices(choices, "继续你的冒险：");
+                        }, 2000);
+                    }
+                } else {
+                    await addText(data.error || "召唤失败，请重试...", 'system');
+                    if (isFirstPet) {
+                        showPetSelection();
+                    } else {
+                        gameState = 'game';
+                        const choices = generateGameChoices();
+                        showChoices(choices, "继续你的冒险：");
+                    }
+                }
+            } catch (error) {
+                hideLoading();
+                await addText("连接中断，请稍后重试...", 'system');
+            }
+        }
+
+        // 显示宠物结果
+        async function showPetResult(data, choice, isFirstPet) {
+            const pet = data.pet;
+            
+            if (isFirstPet) {
+                await addText("光芒闪过，你的第一个伙伴出现了！", 'system');
+            } else {
+                await addText("新的伙伴加入了你的队伍！", 'system');
+            }
+            
+            await addText(`${pet.appearance}`, 'normal');
+            await addText(`你决定称呼它为"${pet.name}"`, 'pet');
+            await addText(`${pet.name}现在是你队伍的一员！`, 'important');
+        }
+
+        // 处理游戏行动
+        async function handleGameAction(choice) {
+            if (!activePet) {
+                await addText("请先选择一个活跃的伙伴！", 'system');
+                return;
+            }
+
+            await addText(`你和${activePet.name}决定：${choice.title}`, 'normal');
+            
+            showLoading("执行中");
+            
+            try {
+                const response = await fetch(`/api/pets/${activePet.id}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: choice.value,
+                        target: 'self',
+                        context: { userAction: choice.title }
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (response.ok) {
+                    await addText(data.message, 'system');
+                    if (data.explanation) {
+                        await addText(data.explanation, 'system');
+                    }
+
+                    // 给宠物增加经验
+                    const expGain = Math.floor(Math.random() * 20) + 10;
+                    await addExperience(activePet.id, expGain);
+                } else {
+                    await addText("行动失败了...", 'system');
+                }
+            } catch (error) {
+                hideLoading();
+                await addText("发生了未知错误...", 'system');
+            }
+            
+            // 继续游戏
+            setTimeout(() => {
+                const choices = generateGameChoices();
+                showChoices(choices, "接下来做什么？");
+            }, 2000);
+        }
+
+        // 增加经验
+        async function addExperience(petId, expAmount) {
+            try {
+                const response = await fetch('/api/multi-pets/add-experience', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ petId, expAmount })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await addText(`${activePet.name}获得了${expAmount}点经验！`, 'system');
+                    
+                    if (data.levelUp) {
+                        await addText(data.levelUp.message, 'level-up-text');
+                        
+                        if (data.unlockNewPet) {
+                            await addText(data.unlockNewPet.message, 'important');
+                            canGetNewPet = true;
+                            showUnlockNotification();
+                        }
+                    }
+                    
+                    // 更新队伍显示
+                    await loadTeamStatus();
+                }
+            } catch (error) {
+                console.error('增加经验失败:', error);
+            }
+        }
+
+        // 显示解锁通知
+        function showUnlockNotification() {
+            unlockNotification.style.display = 'block';
+            document.getElementById('unlockButton').onclick = () => {
+                unlockNotification.style.display = 'none';
+                showNewPetSelection();
+            };
+            
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                unlockNotification.style.display = 'none';
+            }, 5000);
+        }
+
+        // 播放开场
+        async function playIntro() {
+            for (const story of introStory) {
+                await addText(story.text, story.type);
+            }
+            gameState = 'pet-selection';
+            showPetSelection();
+        }
+
+        // 显示宠物选择
+        function showPetSelection() {
+            setTimeout(async () => {
+                await addText("感受内心的呼唤，选择你的第一个伙伴：", 'system');
+                const choices = generatePetChoices();
+                showChoices(choices, "选择你的第一个伙伴：");
+            }, 1000);
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState = 'game';
+            setTimeout(async () => {
+                await addText("=== 多宠物冒险开始 ===", 'title');
+                await addText(`${activePet.name}好奇地看着周围...`, 'pet');
+                await addText("记住：当伙伴达到10级时，你就能召唤新的伙伴了！", 'important');
+                
+                const choices = generateGameChoices();
+                showChoices(choices, "选择你的第一个行动：");
+            }, 2000);
+        }
+
+        // 事件监听
+        continueButton.onclick = () => {
+            if (gameState === 'intro') {
+                playIntro();
+                continueButton.style.display = 'none';
+            }
+        };
+
+        // 初始化
+        window.onload = async () => {
+            gameState = 'intro';
+            
+            // 检查保存的游戏
+            const saved = localStorage.getItem('multiPetUserId');
+            if (saved) {
+                userId = saved;
+                const hasTeam = await loadTeamStatus();
+                
+                if (hasTeam && currentTeam.length > 0) {
+                    gameState = 'game';
+                    continueButton.style.display = 'none';
+                    
+                    await addText("欢迎回到灵境斗宠录", 'title');
+                    await addText(`你的队伍很高兴再次见到你！`, 'pet');
+                    
+                    setTimeout(() => {
+                        const choices = generateGameChoices();
+                        showChoices(choices, "继续你的冒险：");
+                    }, 3000);
+                    return;
+                }
+            }
+            
+            localStorage.setItem('multiPetUserId', userId);
+        };
+
+        // 自动保存
+        setInterval(() => {
+            localStorage.setItem('multiPetUserId', userId);
+        }, 30000);
+    </script>
+</body>
+</html>

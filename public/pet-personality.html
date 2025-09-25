@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物性格系统 - Spirit Pet Chronicles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .pet-selector {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .pet-selector select {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin: 0 10px;
+        }
+
+        .pet-selector button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .pet-selector button:hover {
+            transform: translateY(-2px);
+        }
+
+        .personality-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .personality-type {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .personality-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .personality-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .personality-description {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .traits-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .trait-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .dimensions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .dimension-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .dimension-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .dimension-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            transition: width 0.3s ease;
+        }
+
+        .emotional-state {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .emotion-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .emotion-text {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .chat-interface {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .user-message {
+            background: rgba(100, 149, 237, 0.3);
+            text-align: right;
+        }
+
+        .pet-message {
+            background: rgba(255, 182, 193, 0.3);
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .chat-input button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .personality-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .dimensions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐾 宠物性格系统</h1>
+            <p>探索你的宠物独特的性格特征和情感世界</p>
+        </div>
+
+        <div class="navigation">
+            <a href="/" class="nav-button">🏠 主页</a>
+            <a href="/pokemon" class="nav-button">🎮 游戏界面</a>
+            <a href="/personality" class="nav-button">🐾 性格系统</a>
+        </div>
+
+        <div class="pet-selector">
+            <select id="petSelect">
+                <option value="">选择一只宠物</option>
+            </select>
+            <button onclick="loadPetPersonality()">查看性格</button>
+            <button onclick="resetPersonality()">重置性格</button>
+        </div>
+
+        <div id="loading" class="loading pulse" style="display: none;">
+            正在加载宠物性格数据...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="personality-content" style="display: none;">
+            <!-- 性格类型展示 -->
+            <div class="personality-type">
+                <div class="personality-icon" id="personality-icon">🐕</div>
+                <div class="personality-name" id="personality-name">平衡型</div>
+                <div class="personality-description" id="personality-description">性格均衡，适应性强</div>
+                <div class="traits-container" id="traits-container">
+                    <!-- 动态生成特质标签 -->
+                </div>
+            </div>
+
+            <div class="personality-dashboard">
+                <!-- 性格维度 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>🧠</span>
+                        <span>天性特征</span>
+                    </div>
+                    <div class="dimensions-grid" id="nature-dimensions">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>💖</span>
+                        <span>情感状态</span>
+                    </div>
+                    <div class="dimensions-grid" id="emotion-dimensions">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>🎭</span>
+                        <span>行为表现</span>
+                    </div>
+                    <div class="dimensions-grid" id="behavior-dimensions">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>😊</span>
+                        <span>当前情绪</span>
+                    </div>
+                    <div class="emotional-state">
+                        <div class="emotion-icon" id="emotion-icon">😊</div>
+                        <div class="emotion-text" id="emotion-text">平静</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天界面 -->
+            <div class="chat-interface">
+                <div class="card-title">
+                    <span>💬</span>
+                    <span>与宠物互动</span>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message pet-message">
+                        <strong>🐾 宠物:</strong> 你好！我很高兴见到你！
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="和你的宠物说些什么..." onkeypress="handleChatKeyPress(event)">
+                    <button onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPetId = null;
+        let currentPersonality = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPetList();
+        });
+
+        // 加载宠物列表
+        async function loadPetList() {
+            try {
+                // 模拟宠物数据，实际应该从API获取
+                const pets = [
+                    { id: '1', name: '小火龙', species: '龙' },
+                    { id: '2', name: '水精灵', species: '水系' },
+                    { id: '3', name: '森林狐', species: '狐狸' }
+                ];
+                
+                const select = document.getElementById('petSelect');
+                select.innerHTML = '<option value="">选择一只宠物</option>';
+                
+                pets.forEach(pet => {
+                    const option = document.createElement('option');
+                    option.value = pet.id;
+                    option.textContent = `${pet.name} (${pet.species})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showError('加载宠物列表失败: ' + error.message);
+            }
+        }
+
+        // 加载宠物性格
+        async function loadPetPersonality() {
+            const petId = document.getElementById('petSelect').value;
+            if (!petId) {
+                showError('请先选择一只宠物');
+                return;
+            }
+
+            currentPetId = petId;
+            showLoading(true);
+            hideError();
+
+            try {
+                // 模拟性格数据
+                const mockPersonality = {
+                    type: '活力型',
+                    description: '充满活力，热情开朗，喜欢表现',
+                    traits: ['精力充沛', '好奇心强', '喜欢互动'],
+                    dimensions: {
+                        nature: {
+                            energy: 85,
+                            curiosity: 78,
+                            independence: 45
+                        },
+                        emotion: {
+                            happiness: 92,
+                            trust: 67,
+                            excitement: 88
+                        },
+                        behavior: {
+                            playfulness: 90,
+                            obedience: 55,
+                            expressiveness: 82
+                        }
+                    },
+                    emotionalState: 'joyful'
+                };
+                
+                currentPersonality = mockPersonality;
+                displayPersonality(mockPersonality);
+                document.getElementById('personality-content').style.display = 'block';
+                
+            } catch (error) {
+                showError('加载宠物性格失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示性格信息
+        function displayPersonality(data) {
+            // 更新性格类型
+            const typeIcons = {
+                '活力型': '⚡',
+                '内敛型': '🌙',
+                '独立型': '🦅',
+                '依赖型': '🤗',
+                '平衡型': '⚖️'
+            };
+
+            document.getElementById('personality-icon').textContent = typeIcons[data.type] || '🐾';
+            document.getElementById('personality-name').textContent = data.type;
+            document.getElementById('personality-description').textContent = data.description;
+
+            // 更新特质标签
+            const traitsContainer = document.getElementById('traits-container');
+            traitsContainer.innerHTML = '';
+            data.traits.forEach(trait => {
+                const tag = document.createElement('div');
+                tag.className = 'trait-tag';
+                tag.textContent = trait;
+                traitsContainer.appendChild(tag);
+            });
+
+            // 更新维度数据
+            updateDimensions('nature-dimensions', data.dimensions.nature, {
+                energy: '活跃度',
+                curiosity: '好奇心',
+                independence: '独立性'
+            });
+
+            updateDimensions('emotion-dimensions', data.dimensions.emotion, {
+                happiness: '快乐度',
+                trust: '信任度',
+                excitement: '兴奋度'
+            });
+
+            updateDimensions('behavior-dimensions', data.dimensions.behavior, {
+                playfulness: '玩耍性',
+                obedience: '服从性',
+                expressiveness: '表达欲'
+            });
+
+            // 更新情绪状态
+            const emotionIcons = {
+                'joyful': '😄',
+                'excited': '🤩',
+                'calm': '😌',
+                'curious': '🤔',
+                'affectionate': '🥰',
+                'independent': '😎'
+            };
+
+            const emotionTexts = {
+                'joyful': '快乐',
+                'excited': '兴奋',
+                'calm': '平静',
+                'curious': '好奇',
+                'affectionate': '亲昵',
+                'independent': '独立'
+            };
+
+            document.getElementById('emotion-icon').textContent = emotionIcons[data.emotionalState] || '😊';
+            document.getElementById('emotion-text').textContent = emotionTexts[data.emotionalState] || '平静';
+        }
+
+        // 更新维度显示
+        function updateDimensions(containerId, dimensions, labels) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            Object.keys(dimensions).forEach(key => {
+                const item = document.createElement('div');
+                item.className = 'dimension-item';
+                
+                const value = dimensions[key];
+                item.innerHTML = `
+                    <div class="dimension-value">${value}%</div>
+                    <div class="dimension-label">${labels[key] || key}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${value}%"></div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !currentPetId) return;
+
+            // 显示用户消息
+            addMessage('user', message);
+            input.value = '';
+
+            // 模拟宠物回应
+            setTimeout(() => {
+                const responses = [
+                    '*兴奋地摇着尾巴* 哇！你说得真有趣！我也想和你一起玩！',
+                    '*好奇地歪着头* 这个我还没听过呢，能告诉我更多吗？',
+                    '*开心地跳跃* 太棒了！我感觉今天特别有活力！',
+                    '*亲昵地靠近你* 和你聊天总是让我很开心呢！',
+                    '*眼中闪烁着兴奋的光芒* 我们下次可以一起去冒险吗？'
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage('pet', randomResponse);
+                
+                // 模拟性格微调
+                if (Math.random() > 0.7) {
+                    setTimeout(() => {
+                        addMessage('system', '🌟 通过互动，你的宠物性格发生了微妙的变化！');
+                    }, 1000);
+                }
+            }, 1000);
+        }
+
+        // 添加消息到聊天界面
+        function addMessage(type, content) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            
+            if (type === 'user') {
+                messageDiv.className = 'message user-message';
+                messageDiv.innerHTML = `<strong>👤 你:</strong> ${content}`;
+            } else if (type === 'pet') {
+                messageDiv.className = 'message pet-message';
+                messageDiv.innerHTML = `<strong>🐾 宠物:</strong> ${content}`;
+            } else {
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `<strong>ℹ️ 系统:</strong> ${content}`;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 处理聊天输入框回车事件
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 重置性格
+        async function resetPersonality() {
+            if (!currentPetId) {
+                showError('请先选择一只宠物');
+                return;
+            }
+
+            if (!confirm('确定要重置宠物的性格吗？这将清除所有性格发展历史。')) {
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                // 模拟重置
+                setTimeout(() => {
+                    alert('宠物性格已重置！');
+                    loadPetPersonality();
+                }, 1000);
+
+            } catch (error) {
+                showError('重置性格失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
