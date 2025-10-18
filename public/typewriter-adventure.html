@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 世界树的种子</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Microsoft YaHei', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景粒子效果 */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .story-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            min-height: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .story-title {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            100% { text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+        }
+
+        .story-content {
+            font-size: 1.2em;
+            line-height: 1.8;
+            text-align: justify;
+            color: #d0d0d0;
+            min-height: 200px;
+        }
+
+        .typewriter-text {
+            border-right: 2px solid #ffd700;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { border-color: #ffd700; }
+            51%, 100% { border-color: transparent; }
+        }
+
+        .choices-container {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .choice-button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .choice-button:hover {
+            background: linear-gradient(45deg, #2a2a3e, #26314e);
+            border-color: #ffd700;
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .choice-button:active {
+            transform: translateX(5px) scale(0.98);
+        }
+
+        .author-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9em;
+            color: #888;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-indicator {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.1em;
+            margin: 20px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-indicator.show {
+            opacity: 1;
+        }
+
+        .loading-dots {
+            animation: loadingDots 1.5s infinite;
+        }
+
+        @keyframes loadingDots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: loadingDots 1.5s infinite;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px 15px;
+            }
+            
+            .story-display {
+                padding: 25px;
+                min-height: 300px;
+            }
+            
+            .story-title {
+                font-size: 2em;
+            }
+            
+            .story-content {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="game-container">
+        <div class="story-display">
+            <h1 class="story-title">灵境斗宠录</h1>
+            <div class="story-content">
+                <div class="typewriter-text" id="story-text"></div>
+            </div>
+            <div class="loading-indicator" id="loading">
+                <span>正在生成剧情</span><span class="loading-dots"></span>
+            </div>
+        </div>
+        
+        <div class="choices-container" id="choices-container" style="display: none;">
+            <!-- 选择按钮将动态生成 -->
+        </div>
+    </div>
+
+    <div class="author-info">
+        作者：树枝 | 微信：wzq8083
+    </div>
+
+    <script>
+        class TypewriterAdventure {
+            constructor() {
+                this.storyTextElement = document.getElementById('story-text');
+                this.choicesContainer = document.getElementById('choices-container');
+                this.loadingIndicator = document.getElementById('loading');
+                this.currentStoryIndex = 0;
+                this.isTyping = false;
+                
+                this.initializeParticles();
+                this.startAdventure();
+            }
+
+            // 初始化背景粒子
+            initializeParticles() {
+                const particlesContainer = document.getElementById('particles');
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            // 开始冒险
+            async startAdventure() {
+                const openingStory = `
+远古时代，一颗来自世界树的种子飘落到这片未知的大陆上...
+
+种子落地的瞬间，大地震颤，山川重塑。从种子中涌出的生命之力唤醒了沉睡在山海之间的古老生灵。
+
+龙族在云端苏醒，凤凰在烈火中重生，麒麟踏着祥云而来，而传说中的鲲鹏展翅遮天蔽日...
+
+这里是灵境，一个充满奇迹与危险的世界。在这里，每一个生灵都拥有着无限的可能，每一次相遇都可能改变命运的轨迹。
+
+而你，作为这个世界的见证者，即将踏上一段不可思议的旅程...
+                `.trim();
+
+                await this.typewriterEffect(openingStory);
+                
+                setTimeout(() => {
+                    this.showChoices([
+                        { text: "🌸 前往樱花森林，寻找温和的精灵伙伴", action: "forest" },
+                        { text: "🏔️ 攀登雪峰山脉，挑战强大的龙族", action: "mountain" },
+                        { text: "🌊 深入碧海深渊，探寻神秘的海洋生物", action: "ocean" },
+                        { text: "✨ 进入梦幻空间，与传说中的神兽相遇", action: "dream" }
+                    ]);
+                }, 1000);
+            }
+
+            // 打字机效果
+            async typewriterEffect(text, speed = 50) {
+                this.isTyping = true;
+                this.storyTextElement.innerHTML = '';
+                this.storyTextElement.classList.add('typewriter-text');
+                
+                for (let i = 0; i < text.length; i++) {
+                    if (!this.isTyping) break;
+                    
+                    this.storyTextElement.innerHTML += text[i];
+                    
+                    // 如果是标点符号，稍微停顿
+                    if ('，。！？；：'.includes(text[i])) {
+                        await this.sleep(speed * 3);
+                    } else if (text[i] === '\n') {
+                        await this.sleep(speed * 2);
+                    } else {
+                        await this.sleep(speed);
+                    }
+                }
+                
+                this.storyTextElement.classList.remove('typewriter-text');
+                this.isTyping = false;
+            }
+
+            // 显示选择按钮
+            showChoices(choices) {
+                this.choicesContainer.innerHTML = '';
+                this.choicesContainer.style.display = 'block';
+                
+                choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.textContent = choice.text;
+                    button.style.animationDelay = (index * 0.2) + 's';
+                    button.style.animation = 'slideInLeft 0.5s ease forwards';
+                    
+                    button.addEventListener('click', () => {
+                        this.handleChoice(choice.action);
+                    });
+                    
+                    this.choicesContainer.appendChild(button);
+                });
+            }
+
+            // 处理选择
+            async handleChoice(action) {
+                this.choicesContainer.style.display = 'none';
+                this.showLoading();
+                
+                // 模拟AI生成内容的延迟
+                await this.sleep(2000);
+                
+                this.hideLoading();
+                
+                let nextStory = '';
+                let nextChoices = [];
+                
+                switch (action) {
+                    case 'forest':
+                        nextStory = `
+你踏入了樱花森林的深处，粉色的花瓣如雪花般飘落。
+
+在一片花瓣雨中，你遇到了一只小小的九尾狐幼崽。它的毛发洁白如雪，眼中闪烁着智慧的光芒。
+
+"你好，陌生的旅者。"小狐狸用清脆的声音说道，"我感受到了你身上世界树种子的气息。也许，我们注定要成为伙伴。"
+
+九尾狐的话语中蕴含着古老的魔力，你感到一股暖流涌入心中...
+                        `;
+                        nextChoices = [
+                            { text: "🤝 接受九尾狐成为伙伴", action: "accept_fox" },
+                            { text: "🔍 继续探索森林深处", action: "explore_forest" },
+                            { text: "🌸 采集樱花花瓣制作灵药", action: "collect_petals" }
+                        ];
+                        break;
+                        
+                    case 'mountain':
+                        nextStory = `
+雪峰山脉的寒风刺骨，但你的内心燃烧着探索的火焰。
+
+在山巅之上，你看到了一条巨大的冰龙盘踞在古老的神殿前。它的鳞片如水晶般透明，呼吸间吐出的寒气能够冻结一切。
+
+"凡人，你为何来到我的领域？"冰龙的声音如雷鸣般响彻山谷，"是来挑战我的威严，还是寻求我的庇护？"
+
+你感受到了前所未有的压迫感，但同时也感受到了冰龙内心深处的孤独...
+                        `;
+                        nextChoices = [
+                            { text: "⚔️ 勇敢地向冰龙发起挑战", action: "challenge_dragon" },
+                            { text: "🙏 请求冰龙传授古老的智慧", action: "seek_wisdom" },
+                            { text: "❄️ 尝试与冰龙建立友谊", action: "befriend_dragon" }
+                        ];
+                        break;
+                        
+                    case 'ocean':
+                        nextStory = `
+碧海深渊的水下世界美得令人窒息，珊瑚城堡在海底闪闪发光。
+
+突然，一只巨大的鲲鱼从深海中浮现。它的身躯如山岳般庞大，背上长满了发光的藻类，宛如移动的海底花园。
+
+"年轻的探索者，"鲲鱼的声音在水中回荡，"我已在这深海中游弋了千年。你的到来让我想起了世界树初生时的那份纯真。"
+
+鲲鱼的眼中闪烁着古老的智慧，仿佛能看透时间的长河...
+                        `;
+                        nextChoices = [
+                            { text: "🐋 请求鲲鱼带你游历海底世界", action: "ride_kun" },
+                            { text: "🔱 探索海底的古老遗迹", action: "explore_ruins" },
+                            { text: "🌊 学习操控海洋的力量", action: "learn_ocean_power" }
+                        ];
+                        break;
+                        
+                    case 'dream':
+                        nextStory = `
+梦幻空间是一个超越现实的奇妙领域，这里的一切都在不断变化着形态。
+
+在七彩的光芒中，一只凤凰缓缓降临。它的羽毛燃烧着永不熄灭的圣火，每一次振翅都带来新生的希望。
+
+"命运的孩子，"凤凰的声音如天籁般动听，"你携带着世界树的祝福来到这里。在这梦幻空间中，一切皆有可能。"
+
+凤凰的火焰不会灼伤你，反而让你感到前所未有的温暖和力量...
+                        `;
+                        nextChoices = [
+                            { text: "🔥 接受凤凰的涅槃之火洗礼", action: "phoenix_rebirth" },
+                            { text: "🌈 探索梦幻空间的奥秘", action: "explore_dream" },
+                            { text: "✨ 请求凤凰预言未来", action: "seek_prophecy" }
+                        ];
+                        break;
+                        
+                    default:
+                        nextStory = "你的选择开启了一个全新的冒险篇章...";
+                        nextChoices = [
+                            { text: "🔄 重新开始冒险", action: "restart" }
+                        ];
+                }
+                
+                await this.typewriterEffect(nextStory);
+                
+                setTimeout(() => {
+                    this.showChoices(nextChoices);
+                }, 1000);
+            }
+
+            // 显示加载指示器
+            showLoading() {
+                this.loadingIndicator.classList.add('show');
+            }
+
+            // 隐藏加载指示器
+            hideLoading() {
+                this.loadingIndicator.classList.remove('show');
+            }
+
+            // 延迟函数
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // 页面加载完成后启动游戏
+        document.addEventListener('DOMContentLoaded', () => {
+            new TypewriterAdventure();
+        });
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInLeft {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

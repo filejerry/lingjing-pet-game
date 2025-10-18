@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵境斗宠录 - 选择你的伙伴</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Microsoft YaHei', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景粒子效果 */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .story-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            min-height: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .story-title {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            100% { text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+        }
+
+        .story-content {
+            font-size: 1.2em;
+            line-height: 1.8;
+            text-align: justify;
+            color: #d0d0d0;
+            min-height: 200px;
+        }
+
+        .story-line {
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .story-line.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .choices-container {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .choice-button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-family: inherit;
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+
+        .choice-button.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .choice-button:hover {
+            background: linear-gradient(45deg, #2a2a3e, #26314e);
+            border-color: #ffd700;
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .choice-button:active {
+            transform: translateX(5px) scale(0.98);
+        }
+
+        /* 稀有度颜色 */
+        .rarity-sss {
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            background-size: 400% 400%;
+            animation: rainbow 2s ease-in-out infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .rarity-ssr {
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        .rarity-sr {
+            color: #aa44ff;
+            text-shadow: 0 0 10px rgba(170, 68, 255, 0.5);
+        }
+
+        .rarity-r {
+            color: #4488ff;
+            text-shadow: 0 0 10px rgba(68, 136, 255, 0.5);
+        }
+
+        .rarity-n {
+            color: #888888;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .author-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9em;
+            color: #888;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-indicator {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.1em;
+            margin: 20px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-indicator.show {
+            opacity: 1;
+        }
+
+        .loading-dots {
+            animation: loadingDots 1.5s infinite;
+        }
+
+        @keyframes loadingDots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: loadingDots 1.5s infinite;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px 15px;
+            }
+            
+            .story-display {
+                padding: 25px;
+                min-height: 300px;
+            }
+            
+            .story-title {
+                font-size: 2em;
+            }
+            
+            .story-content {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="game-container">
+        <div class="story-display">
+            <h1 class="story-title">灵境斗宠录</h1>
+            <div class="story-content" id="story-text">
+                <!-- 故事内容将在这里动态生成 -->
+            </div>
+            <div class="loading-indicator" id="loading">
+                <span>正在生成剧情</span><span class="loading-dots"></span>
+            </div>
+        </div>
+        
+        <div class="choices-container" id="choices-container" style="display: none;">
+            <!-- 选择按钮将动态生成 -->
+        </div>
+    </div>
+
+    <div class="author-info">
+        作者：树枝 | 微信：wzq8083
+    </div>
+
+    <script>
+        class LineByLineAdventure {
+            constructor() {
+                this.storyTextElement = document.getElementById('story-text');
+                this.choicesContainer = document.getElementById('choices-container');
+                this.loadingIndicator = document.getElementById('loading');
+                this.currentStoryIndex = 0;
+                this.isDisplaying = false;
+                
+                this.initializeParticles();
+                this.startAdventure();
+            }
+
+            // 初始化背景粒子
+            initializeParticles() {
+                const particlesContainer = document.getElementById('particles');
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            // 开始冒险
+            async startAdventure() {
+                const openingLines = [
+                    "欢迎来到灵境世界，这里是世界树种子孕育的神秘大陆...",
+                    "",
+                    "在这片古老的土地上，栖息着来自山海经的神奇生灵。",
+                    "",
+                    "你感受到了三股不同的灵力波动，请选择你想要感应的方向：",
+                    "",
+                    "（AI将根据你的选择为你匹配合适的灵宠伙伴）"
+                ];
+
+                await this.displayLinesSequentially(openingLines);
+                
+                setTimeout(() => {
+                    this.showChoices([
+                        { 
+                            text: "🌅 感应东方的温暖光芒 - 那里传来生机勃勃的气息", 
+                            rarity: "n",
+                            action: "sense_east" 
+                        },
+                        { 
+                            text: "🌙 感应北方的神秘月光 - 那里隐藏着古老的秘密", 
+                            rarity: "n",
+                            action: "sense_north" 
+                        },
+                        { 
+                            text: "⚡ 感应西方的雷电之力 - 那里充满了狂野的能量", 
+                            rarity: "n",
+                            action: "sense_west" 
+                        }
+                    ]);
+                }, 1000);
+            }
+
+            // 逐行显示文字
+            async displayLinesSequentially(lines, speed = 800) {
+                this.isDisplaying = true;
+                this.storyTextElement.innerHTML = '';
+                
+                for (let i = 0; i < lines.length; i++) {
+                    if (!this.isDisplaying) break;
+                    
+                    const lineElement = document.createElement('div');
+                    lineElement.className = 'story-line';
+                    lineElement.textContent = lines[i];
+                    
+                    this.storyTextElement.appendChild(lineElement);
+                    
+                    // 触发动画
+                    setTimeout(() => {
+                        lineElement.classList.add('show');
+                    }, 50);
+                    
+                    // 如果是空行，减少等待时间
+                    const waitTime = lines[i].trim() === '' ? speed / 3 : speed;
+                    await this.sleep(waitTime);
+                }
+                
+                this.isDisplaying = false;
+            }
+
+            // 显示选择按钮
+            showChoices(choices) {
+                this.choicesContainer.innerHTML = '';
+                this.choicesContainer.style.display = 'block';
+                
+                choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.className = `choice-button rarity-${choice.rarity}`;
+                    button.textContent = choice.text;
+                    
+                    button.addEventListener('click', () => {
+                        this.handleChoice(choice.action);
+                    });
+                    
+                    this.choicesContainer.appendChild(button);
+                    
+                    // 延迟显示动画
+                    setTimeout(() => {
+                        button.classList.add('show');
+                    }, index * 200);
+                });
+            }
+
+            // 处理选择
+            async handleChoice(action) {
+                this.choicesContainer.style.display = 'none';
+                this.showLoading();
+                
+                // 模拟AI生成内容的延迟
+                await this.sleep(1500);
+                
+                this.hideLoading();
+                
+                let nextLines = [];
+                let nextChoices = [];
+                
+                switch (action) {
+                    case 'sense_east':
+                        const eastPet = await this.generatePetFromAPI('sense_east');
+                        nextLines = [
+                            "你感应到了东方温暖光芒的召唤...",
+                            "",
+                            "一道金色的光芒闪过，一只灵宠出现在你面前！",
+                            "",
+                            `恭喜！你获得了：${eastPet.name}`,
+                            "",
+                            eastPet.description,
+                            "",
+                            `【获得宠物】${eastPet.name} | 稀有度：${eastPet.rarity.toUpperCase()} | 等级：${eastPet.level}`,
+                            `属性：HP ${eastPet.stats.hp} | 攻击 ${eastPet.stats.attack} | 防御 ${eastPet.stats.defense} | 速度 ${eastPet.stats.speed} | 魔力 ${eastPet.stats.magic}`
+                        ];
+                        nextChoices = [
+                            { text: "🎯 开始第一次冒险", rarity: "n", action: "first_adventure" },
+                            { text: "📚 了解宠物的种族特性", rarity: "n", action: "learn_race" },
+                            { text: "🔍 查看详细属性", rarity: "n", action: "view_stats" }
+                        ];
+                        break;
+                        
+                    case 'sense_north':
+                        const northPet = await this.generatePetFromAPI('sense_north');
+                        nextLines = [
+                            "你感应到了北方神秘月光的指引...",
+                            "",
+                            "一道银色的光芒闪过，一只灵宠出现在你面前！",
+                            "",
+                            `恭喜！你获得了：${northPet.name}`,
+                            "",
+                            northPet.description,
+                            "",
+                            `【获得宠物】${northPet.name} | 稀有度：${northPet.rarity.toUpperCase()} | 等级：${northPet.level}`,
+                            `属性：HP ${northPet.stats.hp} | 攻击 ${northPet.stats.attack} | 防御 ${northPet.stats.defense} | 速度 ${northPet.stats.speed} | 魔力 ${northPet.stats.magic}`
+                        ];
+                        nextChoices = [
+                            { text: "🎯 开始第一次冒险", rarity: "n", action: "first_adventure" },
+                            { text: "📚 了解宠物的种族特性", rarity: "n", action: "learn_race" },
+                            { text: "🔍 查看详细属性", rarity: "n", action: "view_stats" }
+                        ];
+                        break;
+                        
+                    case 'sense_west':
+                        const westPet = await this.generatePetFromAPI('sense_west');
+                        nextLines = [
+                            "你感应到了西方雷电之力的震撼...",
+                            "",
+                            "一道紫色的闪电划过，一只灵宠出现在你面前！",
+                            "",
+                            `恭喜！你获得了：${westPet.name}`,
+                            "",
+                            westPet.description,
+                            "",
+                            `【获得宠物】${westPet.name} | 稀有度：${westPet.rarity.toUpperCase()} | 等级：${westPet.level}`,
+                            `属性：HP ${westPet.stats.hp} | 攻击 ${westPet.stats.attack} | 防御 ${westPet.stats.defense} | 速度 ${westPet.stats.speed} | 魔力 ${westPet.stats.magic}`
+                        ];
+                        nextChoices = [
+                            { text: "🎯 开始第一次冒险", rarity: "n", action: "first_adventure" },
+                            { text: "📚 了解宠物的种族特性", rarity: "n", action: "learn_race" },
+                            { text: "🔍 查看详细属性", rarity: "n", action: "view_stats" }
+                        ];
+                        break;
+                        
+                    default:
+                        nextLines = ["你的冒险故事正在继续..."];
+                        nextChoices = [
+                            { text: "🔄 重新开始", rarity: "n", action: "restart" }
+                        ];
+                }
+                
+                await this.displayLinesSequentially(nextLines);
+                
+                setTimeout(() => {
+                    this.showChoices(nextChoices);
+                }, 1000);
+            }
+
+            // 显示加载指示器
+            showLoading() {
+                this.loadingIndicator.classList.add('show');
+            }
+
+            // 隐藏加载指示器
+            hideLoading() {
+                this.loadingIndicator.classList.remove('show');
+            }
+
+            // 从API生成宠物
+            async generatePetFromAPI(choice) {
+                try {
+                    const response = await fetch('/api/pets/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ choice: choice })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.pet;
+                    } else {
+                        // 如果API失败，使用本地生成
+                        return this.generateLocalPet(choice);
+                    }
+                } catch (error) {
+                    console.error('API调用失败，使用本地生成:', error);
+                    return this.generateLocalPet(choice);
+                }
+            }
+
+            // 本地宠物生成（备用）
+            generateLocalPet(choice) {
+                const pets = {
+                    'sense_east': [
+                        { name: '火鸟*光*幼崽', rarity: 'r', description: '一只充满活力的火鸟幼崽，羽毛闪烁着温暖的光芒。', stats: { hp: 120, attack: 35, defense: 20, speed: 25, magic: 30 } },
+                        { name: '光精*圣*守护', rarity: 'sr', description: '圣洁的光精灵，散发着治愈的光辉。', stats: { hp: 150, attack: 25, defense: 30, speed: 20, magic: 45 } },
+                        { name: '青龙*光*觉醒', rarity: 'ssr', description: '觉醒了光明力量的青龙，威严而神圣。', stats: { hp: 200, attack: 60, defense: 40, speed: 30, magic: 50 } }
+                    ],
+                    'sense_north': [
+                        { name: '雪狼*暗*流浪', rarity: 'r', description: '在雪原中流浪的暗属性狼族，眼中闪烁着神秘的光芒。', stats: { hp: 130, attack: 40, defense: 25, speed: 30, magic: 20 } },
+                        { name: '九尾狐*混沌*少年', rarity: 'sr', description: '掌握混沌之力的九尾狐少年，智慧而狡黠。', stats: { hp: 140, attack: 30, defense: 25, speed: 35, magic: 40 } },
+                        { name: '玄武*暗*远古', rarity: 'ssr', description: '远古时代的玄武神兽，拥有无尽的防御力量。', stats: { hp: 250, attack: 40, defense: 70, speed: 15, magic: 45 } }
+                    ],
+                    'sense_west': [
+                        { name: '雷龙*雷*野生', rarity: 'r', description: '野生的雷龙幼崽，身体中蕴含着狂暴的雷电之力。', stats: { hp: 125, attack: 45, defense: 20, speed: 35, magic: 25 } },
+                        { name: '巨蜥*风*霸主', rarity: 'sr', description: '风属性的巨蜥霸主，拥有强大的攻击力。', stats: { hp: 160, attack: 50, defense: 35, speed: 25, magic: 20 } },
+                        { name: '鲲鹏*雷*神话', rarity: 'ssr', description: '神话中的鲲鹏，掌控雷电与风暴的力量。', stats: { hp: 180, attack: 65, defense: 30, speed: 50, magic: 55 } }
+                    ]
+                };
+                
+                const petList = pets[choice] || pets['sense_east'];
+                const weights = [70, 25, 5]; // N/R: 70%, SR: 25%, SSR: 5%
+                const random = Math.random() * 100;
+                
+                let selectedPet;
+                if (random < weights[0]) {
+                    selectedPet = petList[0]; // R级
+                } else if (random < weights[0] + weights[1]) {
+                    selectedPet = petList[1]; // SR级
+                } else {
+                    selectedPet = petList[2]; // SSR级
+                }
+                
+                return {
+                    ...selectedPet,
+                    level: 1,
+                    id: 'local_' + Date.now()
+                };
+            }
+
+            // 延迟函数
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // 页面加载完成后启动游戏
+        document.addEventListener('DOMContentLoaded', () => {
+            new LineByLineAdventure();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>灵境斗宠录 - 轻量体验版</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Microsoft YaHei','Courier New',monospace;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%);color:#e0e0e0;min-height:100vh}
+    .panel{position:fixed;top:16px;right:16px;z-index:10;display:flex;gap:8px}
+    .btn{padding:8px 14px;background:rgba(0,0,0,.8);border:1px solid #333;border-radius:18px;color:#e0e0e0;cursor:pointer;transition:.25s;min-width:80px}
+    .btn:hover{border-color:#ffd700;background:rgba(0,0,0,.9);transform:scale(1.04)}
+    .stage{max-width:820px;margin:0 auto;padding:60px 24px}
+    .card{background:rgba(0,0,0,.6);border-radius:20px;padding:32px 24px;backdrop-filter:blur(12px);box-shadow:0 20px 60px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1)}
+    .line{opacity:0;transform:translateY(12px);transition:all .8s cubic-bezier(.23,1,.32,1);margin:14px 0;text-align:center}
+    .line.show{opacity:1;transform:translateY(0)}
+    .line.title{font-size:2.0em;background:linear-gradient(135deg,#ffd700,#fff,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 22px rgba(255,215,0,.3);font-weight:600;letter-spacing:2px}
+    .line.sub{font-size:.95em;color:#bbb;font-style:italic}
+    .choices{margin-top:24px}
+    .choice{display:block;width:100%;padding:14px 18px;margin-bottom:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#e0e0e0;cursor:pointer;text-align:center;transition:.25s}
+    .choice:hover{border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.08)}
+    .pet{margin-top:20px;text-align:center}
+    .avatar{width:140px;height:140px;background:linear-gradient(45deg,#333,#555);border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:3.6em;border:3px solid #666;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+    .rarity{display:inline-block;margin-top:8px;padding:6px 14px;border-radius:18px;font-weight:500}
+    .r-SSS{background:linear-gradient(45deg,#f00,#ff7f00,#ff0,#0f0,#00f,#4b0082,#9400d3);color:#fff;animation:rainbow 2s linear infinite}
+    .r-SSR{background:linear-gradient(45deg,#ff4444,#cc0000);color:#fff}
+    .r-SR{background:linear-gradient(45deg,#8a2be2,#4b0082);color:#fff}
+    .r-R{background:linear-gradient(45deg,#4169e1,#0000ff);color:#fff}
+    .r-N{background:linear-gradient(45deg,#808080,#555);color:#fff}
+    @keyframes rainbow{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+    .status{position:fixed;left:16px;bottom:16px;background:rgba(0,0,0,.8);border:1px solid #333;border-radius:14px;padding:12px 14px;font-size:.9em;color:#aaa}
+    .ok{color:#7CFC00}.bad{color:#ff4444}
+    input.name{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 12px;color:#e0e0e0;text-align:center;max-width:260px}
+    .small{font-size:.9em;color:#ccc}
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <button class="btn" id="btnStart">开始游玩</button>
+    <button class="btn" id="btnRestart">重新开始</button>
+    <button class="btn" id="btnSave">保存</button>
+    <button class="btn" id="btnLoad">加载</button>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="line title">灵境斗宠录</div>
+      <div class="line sub">本地轻量体验版 · 逐行演出</div>
+      <div class="line">作者：树枝 · 微信：wzq8083</div>
+      <div class="line small">如提示“连接中断”，系统会自动改用本地模拟，保证可玩</div>
+      <div class="choices" id="choices" style="display:none"></div>
+      <div class="pet" id="pet" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="status" id="status">
+    心跳：<span id="hb" class="bad">未连接</span> | 宠物：<span id="pc">0</span> | 稀有：<span id="br">-</span>
+  </div>
+
+  <script>
+    const state = { connected:false, petCount:0, bestRarity:'-', currentPet:null };
+    const rarityColor = { SSS:'#ffd700', SSR:'#ff4444', SR:'#8a2be2', R:'#4169e1', N:'#808080' };
+    const baseURL = ''; // 同源相对路径
+
+    function showLines() {
+      const lines = Array.from(document.querySelectorAll('.line'));
+      lines.forEach((el,i)=>setTimeout(()=>el.classList.add('show'), i*500));
+    }
+
+    async function heartbeat() {
+      try {
+        const r = await fetch('/api/heartbeat'); 
+        if (!r.ok) throw new Error('api heartbeat 404');
+        const j = await r.json();
+        state.connected = !!(j && j.ok);
+      } catch(e) {
+        // 尝试备用
+        try {
+          const r2 = await fetch('/heartbeat');
+          state.connected = r2.ok;
+        } catch(e2) {
+          state.connected = false;
+        }
+      }
+      document.getElementById('hb').textContent = state.connected ? '在线' : '离线(本地模拟)';
+      document.getElementById('hb').className = state.connected ? 'ok' : 'bad';
+    }
+
+    function updateStats() {
+      document.getElementById('pc').textContent = state.petCount;
+      document.getElementById('br').textContent = state.bestRarity;
+    }
+
+    function showChoices() {
+      const choicesEl = document.getElementById('choices');
+      choicesEl.innerHTML = '';
+      const choices = [
+        { text:'我听到远古龙吟，威严而神秘……', type:'dragon' },
+        { text:'我感受自然之息，生机勃勃……', type:'nature' },
+        { text:'我看到星空幻象，虚实交错……', type:'mystic' },
+      ];
+      for (const c of choices) {
+        const btn = document.createElement('button');
+        btn.className='choice'; btn.textContent=c.text;
+        btn.onclick = ()=>generatePet(c.type);
+        choicesEl.appendChild(btn);
+      }
+      choicesEl.style.display='block';
+    }
+
+    async function generatePet(choiceType) {
+      // 若后端未来提供真实生成，这里可改为调用相应API；当前保证本地可玩
+      await new Promise(r=>setTimeout(r, 800));
+      const pet = await mockPet(choiceType);
+      state.currentPet = pet; state.petCount++; updateBestRarity(pet.rarity); updateStats();
+      renderPet(pet);
+    }
+
+    async function mockPet(choiceType) {
+      const roll = Math.random();
+      const rarity = roll<0.01?'SSS':roll<0.05?'SSR':roll<0.15?'SR':roll<0.35?'R':'N';
+      const tpl = {
+        dragon:{ species:['火龙','冰龙','雷龙','暗龙','光龙'], emoji:'🐉', base:'来自龙界的古老存在，拥有超越时间的力量。' },
+        nature:{ species:['树灵','花仙','木精','草妖','藤怪'], emoji:'🌿', base:'自然之子，与大地和谐共生，治愈与成长兼具。' },
+        mystic:{ species:['幻灵','星兽','虚影','梦魇','时灵'], emoji:'✨', base:'虚空来客，掌握现实与幻象的奥秘。' }
+      }[choiceType] || { species:['灵兽'], emoji:'✨', base:'神秘灵兽。' };
+      const species = tpl.species[Math.floor(Math.random()*tpl.species.length)];
+      const attrs = { hp:rand(80,120,rarity), attack:rand(15,35,rarity), defense:rand(10,25,rarity), speed:rand(8,20,rarity), magic:rand(12,30,rarity) };
+      const loreMap = {
+        SSS:`传说中的${species}，圣辉环绕，唯世界树降临时方显。`,
+        SSR:`稀有的${species}，掌握奥秘，唯勇者可得其认可。`,
+        SR:`珍贵的${species}，展现独特气质，承载古老记忆。`,
+        R:`优秀的${species}，能力均衡，值得珍惜。`,
+        N:`普通的${species}，虽平凡亦有独特价值。`
+      };
+      return { id:Date.now().toString(), species, emoji:tpl.emoji, rarity, attrs, desc:tpl.base, lore:loreMap[rarity], name:`${species}*灵息*初识` };
+    }
+    function rand(base, span, rarity){
+      const mult = {SSS:2.0,SSR:1.5,SR:1.3,R:1.1,N:1.0}[rarity]||1.0;
+      return Math.floor((base + Math.floor(Math.random()*span))*mult);
+    }
+    function updateBestRarity(r){
+      const order = ['N','R','SR','SSR','SSS'];
+      if (order.indexOf(r) > order.indexOf(state.bestRarity)) state.bestRarity=r;
+    }
+
+    function renderPet(p) {
+      const petEl = document.getElementById('pet');
+      petEl.style.display='block';
+      petEl.innerHTML = `
+        <div class="avatar" style="border-color:${rarityColor[p.rarity]||'#808080'}">${p.emoji}</div>
+        <div style="text-align:center;margin-bottom:8px;font-size:1.2em">${p.name}</div>
+        <div class="rarity r-${p.rarity}">${p.rarity}</div>
+        <div style="margin-top:10px" class="small">${p.desc}</div>
+        <div style="margin-top:8px" class="small" title="背景故事">${p.lore}</div>
+        <div style="margin-top:14px">
+          <input id="nick" class="name" placeholder="为伙伴起名..." maxlength="20"/>
+          <button class="btn" style="margin-left:8px" onclick="confirmName()">确认命名</button>
+          <button class="btn" style="margin-left:8px" onclick="viewStats()">查看属性</button>
+        </div>
+      `;
+    }
+
+    function confirmName(){
+      const p = state.currentPet; if(!p) return;
+      const nick = (document.getElementById('nick').value||'').trim();
+      const petEl = document.getElementById('pet');
+      const display = nick? `${nick} (${p.species}·${p.rarity})` : p.name;
+      petEl.querySelector('div:nth-child(2)').textContent = display;
+    }
+
+    function viewStats(){
+      const p = state.currentPet; if(!p) return;
+      alert(`属性详情：
+• 生命值: ${p.attrs.hp}
+• 攻击力: ${p.attrs.attack}
+• 防御力: ${p.attrs.defense}
+• 速度: ${p.attrs.speed}
+• 魔力: ${p.attrs.magic}`);
+    }
+
+    function start(){
+      showLines();
+      setTimeout(showChoices, 1200);
+    }
+
+    // controls
+    document.getElementById('btnStart').onclick = start;
+    document.getElementById('btnRestart').onclick = ()=>{ state.petCount=0; state.bestRarity='-'; state.currentPet=null; updateStats(); location.reload(); };
+    document.getElementById('btnSave').onclick = ()=>{ try{ localStorage.setItem('spiritPetLite', JSON.stringify(state)); alert('已保存'); }catch(e){ alert('保存失败:'+e.message);} };
+    document.getElementById('btnLoad').onclick = ()=>{ try{ const s=localStorage.getItem('spiritPetLite'); if(s){ Object.assign(state, JSON.parse(s)); updateStats(); alert('已加载'); } else { alert('无存档'); } }catch(e){ alert('加载失败:'+e.message);} };
+
+    // init
+    (function init(){
+      heartbeat(); updateStats();
+      setInterval(heartbeat, 3000);
+    })();
+  </script>
+</body>
+</html>

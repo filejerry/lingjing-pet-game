@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>山海经灵境斗宠录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 右上角菜单按钮 */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            color: #ffd700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            transform: scale(1.1);
+        }
+
+        /* 右上角菜单面板 */
+        .menu-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 999;
+            transform: translateX(320px);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .menu-panel.open {
+            transform: translateX(0);
+        }
+
+        .menu-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .menu-title {
+            color: #ffd700;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .pet-info {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .evolution-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .evolution-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b);
+            transition: width 0.5s ease;
+        }
+
+        .menu-button {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #e8e8e8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .menu-button:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        /* 主文字区域 */
+        .text-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 40px 40px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .story-text {
+            font-size: 18px;
+            line-height: 2.2;
+            text-align: justify;
+            margin-bottom: 40px;
+            min-height: 300px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 特殊文字样式 */
+        .special-highlight {
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .mythical-creature {
+            color: #ff6b6b;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+        }
+
+        .ancient-wisdom {
+            color: #9b59b6;
+            font-style: italic;
+            text-shadow: 0 0 8px rgba(155, 89, 182, 0.4);
+        }
+
+        .nature-element {
+            color: #2ecc71;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+        }
+
+        /* 选择按钮 */
+        .choices-container {
+            margin-top: 30px;
+        }
+
+        .choice-button {
+            display: block;
+            width: 100%;
+            padding: 20px 30px;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #e8e8e8;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-size: 16px;
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .choice-button:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+        }
+
+        .choice-button:active {
+            transform: translateY(-1px);
+        }
+
+        /* 场景图片 */
+        .scene-image {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0.9;
+        }
+
+        /* 加载状态 */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading .story-text::after {
+            content: "...";
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: "..."; }
+            40% { content: "...."; }
+            60% { content: "....."; }
+            80%, 100% { content: "..."; }
+        }
+
+        /* 隐藏元素 */
+        .hidden {
+            display: none;
+        }
+
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .text-container {
+                padding: 40px 20px 20px 20px;
+            }
+            
+            .story-text {
+                font-size: 16px;
+                line-height: 2;
+                padding: 20px;
+            }
+            
+            .menu-panel {
+                width: 250px;
+                right: 10px;
+                top: 70px;
+            }
+            
+            .menu-toggle {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        /* 文字打字机效果 */
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid #ffd700;
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #ffd700; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 右上角菜单按钮 -->
+    <div class="menu-toggle" id="menuToggle">⚙️</div>
+
+    <!-- 右上角菜单面板 -->
+    <div class="menu-panel" id="menuPanel">
+        <div class="menu-section">
+            <div class="menu-title">🐾 灵宠状态</div>
+            <div class="pet-info">
+                <div>名称: <span id="petName">小灵</span></div>
+                <div>等级: <span id="petLevel">1</span> | 羁绊: <span id="petBond">0</span></div>
+                <div>种族: <span id="petSpecies">未知灵体</span></div>
+                <div>阶段: <span id="evolutionStatus">幼年期</span></div>
+                <div class="evolution-progress">
+                    <div id="evolutionBar" class="evolution-bar" style="width: 25%"></div>
+                </div>
+                <div id="evolutionTip" style="font-size: 11px; color: #aaa;">简单互动即可成长</div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">🎮 游戏操作</div>
+            <button id="startAdventure" class="menu-button">开始冒险</button>
+            <button id="dailyInteraction" class="menu-button">日常互动</button>
+            <button id="exploreWorld" class="menu-button">探索世界</button>
+            <button id="checkEvolution" class="menu-button">检查进化</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">🔧 系统功能</div>
+            <button id="generateScene" class="menu-button">生成场景图片</button>
+            <button id="saveProgress" class="menu-button">保存进度</button>
+            <button id="resetGame" class="menu-button">重置游戏</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">📊 AI状态</div>
+            <div style="font-size: 11px; color: #aaa;">
+                <div>文本: <span class="special-highlight">Kimi</span></div>
+                <div>图像: <span class="special-highlight">即梦4.0</span></div>
+                <div>推理: <span class="special-highlight">已配置</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主文字区域 -->
+    <div class="text-container">
+        <div class="story-text" id="storyText">
+            欢迎来到<span class="special-highlight">山海经灵境斗宠录</span>的神秘世界...<br><br>
+            
+            在这片<span class="ancient-wisdom">远古传说</span>笼罩的土地上，<span class="mythical-creature">神话生物</span>与<span class="nature-element">自然元素</span>交织共存。你将成为一位灵宠培育师，通过纯粹的文字互动，感受与这些神秘伙伴之间的心灵共鸣。<br><br>
+            
+            点击右上角的⚙️按钮，选择"开始冒险"来开启你的<span class="special-highlight">山海经之旅</span>...
+        </div>
+        
+        <div id="sceneImage" class="hidden"></div>
+        <div id="choicesContainer" class="choices-container hidden"></div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = {
+            pet: {
+                name: '小灵',
+                level: 1,
+                bond: 0,
+                species: '未知灵体',
+                stage: 'juvenile',
+                experience: 0
+            },
+            isLoading: false,
+            menuOpen: false
+        };
+
+        // DOM元素
+        const elements = {
+            menuToggle: document.getElementById('menuToggle'),
+            menuPanel: document.getElementById('menuPanel'),
+            storyText: document.getElementById('storyText'),
+            sceneImage: document.getElementById('sceneImage'),
+            choicesContainer: document.getElementById('choicesContainer'),
+            petName: document.getElementById('petName'),
+            petLevel: document.getElementById('petLevel'),
+            petBond: document.getElementById('petBond'),
+            petSpecies: document.getElementById('petSpecies'),
+            evolutionStatus: document.getElementById('evolutionStatus'),
+            evolutionBar: document.getElementById('evolutionBar'),
+            evolutionTip: document.getElementById('evolutionTip')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            updatePetDisplay();
+            updateEvolutionDisplay();
+            
+            // 绑定菜单事件
+            elements.menuToggle.addEventListener('click', toggleMenu);
+            
+            // 绑定游戏功能事件
+            document.getElementById('startAdventure').addEventListener('click', () => {
+                closeMenu();
+                startAdventure();
+            });
+            document.getElementById('dailyInteraction').addEventListener('click', () => {
+                closeMenu();
+                dailyInteraction();
+            });
+            document.getElementById('exploreWorld').addEventListener('click', () => {
+                closeMenu();
+                exploreWorld();
+            });
+            document.getElementById('checkEvolution').addEventListener('click', () => {
+                closeMenu();
+                checkEvolution();
+            });
+            document.getElementById('generateScene').addEventListener('click', () => {
+                closeMenu();
+                generateSceneImage();
+            });
+            document.getElementById('saveProgress').addEventListener('click', () => {
+                closeMenu();
+                saveProgress();
+            });
+            document.getElementById('resetGame').addEventListener('click', () => {
+                closeMenu();
+                resetGame();
+            });
+            
+            // 点击外部关闭菜单
+            document.addEventListener('click', (e) => {
+                if (!elements.menuPanel.contains(e.target) && !elements.menuToggle.contains(e.target)) {
+                    closeMenu();
+                }
+            });
+            
+            // 加载保存的进度
+            loadProgress();
+        }
+
+        // 切换菜单
+        function toggleMenu() {
+            gameState.menuOpen = !gameState.menuOpen;
+            elements.menuPanel.classList.toggle('open', gameState.menuOpen);
+        }
+
+        // 关闭菜单
+        function closeMenu() {
+            gameState.menuOpen = false;
+            elements.menuPanel.classList.remove('open');
+        }
+
+        // 更新宠物显示
+        function updatePetDisplay() {
+            elements.petName.textContent = gameState.pet.name;
+            elements.petLevel.textContent = gameState.pet.level;
+            elements.petBond.textContent = gameState.pet.bond;
+            elements.petSpecies.textContent = gameState.pet.species;
+        }
+
+        // 更新进化显示
+        function updateEvolutionDisplay() {
+            const stages = {
+                juvenile: { name: '幼年期', progress: 25, tip: '简单互动即可成长' },
+                growth: { name: '成长期', progress: 50, tip: '需要更多经验和羁绊' },
+                mature: { name: '成熟期', progress: 75, tip: '接近完全体进化' },
+                complete: { name: '完全体', progress: 100, tip: '已达到最高形态' }
+            };
+
+            const stage = stages[gameState.pet.stage] || stages.juvenile;
+            elements.evolutionStatus.textContent = stage.name;
+            elements.evolutionBar.style.width = stage.progress + '%';
+            elements.evolutionTip.textContent = stage.tip;
+        }
+
+        // 显示故事文本（沉浸式）
+        function displayStory(text, choices = []) {
+            elements.storyText.innerHTML = text;
+            elements.storyText.classList.add('fade-in');
+            
+            // 显示选择
+            if (choices.length > 0) {
+                elements.choicesContainer.innerHTML = '';
+                choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.textContent = choice.text;
+                    button.addEventListener('click', () => makeChoice(choice, index));
+                    elements.choicesContainer.appendChild(button);
+                });
+                elements.choicesContainer.classList.remove('hidden');
+            } else {
+                elements.choicesContainer.classList.add('hidden');
+            }
+            
+            // 自动保存进度
+            saveProgress();
+        }
+
+        // 开始冒险
+        async function startAdventure() {
+            if (gameState.isLoading) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/story-growth/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pet: gameState.pet })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    displayStory(data.story, data.choices || []);
+                } else {
+                    displayStory('在<span class="ancient-wisdom">命运的迷雾</span>中，冒险的道路暂时被遮蔽了...<br><br>请稍后再试，或许<span class="mythical-creature">神秘的力量</span>会重新为你开启道路。');
+                }
+            } catch (error) {
+                console.error('开始冒险失败:', error);
+                displayStory('在<span class="ancient-wisdom">命运的迷雾</span>中，冒险的道路暂时被遮蔽了...<br><br>请稍后再试，或许<span class="mythical-creature">神秘的力量</span>会重新为你开启道路。');
+            }
+            setLoading(false);
+        }
+
+        // 日常互动
+        async function dailyInteraction() {
+            if (gameState.isLoading) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/daily/tick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        pet: gameState.pet,
+                        context: '温馨的日常时光'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.ok) {
+                    displayStory(`<span class="special-highlight">日常时光</span><br><br>${data.event}<br><br>在这份<span class="nature-element">宁静的陪伴</span>中，你与${gameState.pet.name}的<span class="ancient-wisdom">心灵羁绊</span>更加深厚了...`);
+                    
+                    // 增加经验和羁绊
+                    gameState.pet.experience += 5;
+                    gameState.pet.bond += 3;
+                    checkLevelUp();
+                    updatePetDisplay();
+                    updateEvolutionDisplay();
+                } else {
+                    displayStory('在<span class="nature_element">时光的流转</span>中，与灵宠的互动遇到了一些小小的阻碍...<br><br>请稍后再试。');
+                }
+            } catch (error) {
+                console.error('日常互动失败:', error);
+                displayStory('在<span class="nature_element">时光的流转</span>中，与灵宠的互动遇到了一些小小的阻碍...<br><br>请稍后再试。');
+            }
+            setLoading(false);
+        }
+
+        // 探索世界
+        async function exploreWorld() {
+            if (gameState.isLoading) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/adventure/text-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        pet: gameState.pet,
+                        context: '神秘的山海经世界'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.ok) {
+                    displayStory(`<span class="mythical-creature">世界探索</span><br><br>${data.event}<br><br>在这次<span class="ancient-wisdom">神秘的邂逅</span>中，${gameState.pet.name}获得了<span class="special-highlight">珍贵的成长</span>...`);
+                    
+                    // 增加更多经验
+                    gameState.pet.experience += 10;
+                    gameState.pet.bond += 5;
+                    checkLevelUp();
+                    updatePetDisplay();
+                    updateEvolutionDisplay();
+                } else {
+                    displayStory('在<span class="mythical-creature">山海经的深处</span>，探索的道路暂时被<span class="ancient-wisdom">神秘的力量</span>所阻挡...<br><br>请稍后再试。');
+                }
+            } catch (error) {
+                console.error('探索世界失败:', error);
+                displayStory('在<span class="mythical-creature">山海经的深处</span>，探索的道路暂时被<span class="ancient-wisdom">神秘的力量</span>所阻挡...<br><br>请稍后再试。');
+            }
+            setLoading(false);
+        }
+
+        // 检查进化
+        async function checkEvolution() {
+            if (gameState.isLoading) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/evolution/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pet: gameState.pet })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.canEvolve) {
+                    const evolutionText = `<span class="special-highlight">进化的征兆！</span><br><br>` +
+                        `在<span class="ancient-wisdom">命运的指引</span>下，${gameState.pet.name}已经积累了足够的<span class="nature-element">成长力量</span>！<br><br>` +
+                        `<span class="mythical-creature">可能的进化道路</span>：<br><br>` +
+                        data.evolutionOptions.map(option => 
+                            `• <span class="special-highlight">${option.name}</span> - ${option.description}`
+                        ).join('<br>');
+                    
+                    displayStory(evolutionText, data.evolutionOptions.map(option => ({
+                        text: `选择进化为 ${option.name}`,
+                        action: 'evolve',
+                        target: option
+                    })));
+                } else {
+                    displayStory(`<span class="ancient-wisdom">进化的预言</span><br><br>` +
+                        `${gameState.pet.name}还需要在<span class="nature-element">成长的道路</span>上继续前行...<br><br>` +
+                        `当前的<span class="special-highlight">修为</span>：等级${gameState.pet.level}，羁绊${gameState.pet.bond}<br><br>` +
+                        `继续<span class="mythical-creature">互动与探索</span>，积累更多的<span class="ancient-wisdom">成长力量</span>吧！`);
+                }
+            } catch (error) {
+                console.error('检查进化失败:', error);
+                displayStory('在<span class="ancient-wisdom">进化的神秘仪式</span>中，遇到了一些<span class="mythical-creature">未知的阻碍</span>...<br><br>请稍后再试。');
+            }
+            setLoading(false);
+        }
+
+        // 生成场景图片
+        async function generateSceneImage() {
+            if (gameState.isLoading) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/evolution/generate-scene', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        pet: gameState.pet,
+                        scene: '神秘的山海经世界场景'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.imageUrl) {
+                    elements.sceneImage.innerHTML = `<img src="${data.imageUrl}" alt="场景图片" class="scene-image">`;
+                    elements.sceneImage.classList.remove('hidden');
+                    displayStory(`<span class="special-highlight">神秘画卷展开</span><br><br>` +
+                        `通过<span class="mythical-creature">即梦4.0的神力</span>，当前场景的<span class="ancient-wisdom">真实面貌</span>被描绘出来了...<br><br>` +
+                        `这幅<span class="nature-element">山海经风格</span>的画卷，记录着你与${gameState.pet.name}的<span class="special-highlight">珍贵时刻</span>。`);
+                } else {
+                    displayStory('在<span class="ancient-wisdom">画卷的神秘仪式</span>中，<span class="mythical-creature">即梦之力</span>暂时无法显现...<br><br>请稍后再试。');
+                }
+            } catch (error) {
+                console.error('生成场景图片失败:', error);
+                displayStory('在<span class="ancient-wisdom">画卷的神秘仪式</span>中，<span class="mythical-creature">即梦之力</span>暂时无法显现...<br><br>请稍后再试。');
+            }
+            setLoading(false);
+        }
+
+        // 做出选择
+        function makeChoice(choice, index) {
+            if (choice.action === 'evolve') {
+                evolvePet(choice.target);
+            } else {
+                // 处理其他选择
+                gameState.pet.experience += 8;
+                gameState.pet.bond += 4;
+                checkLevelUp();
+                updatePetDisplay();
+                updateEvolutionDisplay();
+                
+                displayStory(`你选择了：<span class="special-highlight">${choice.text}</span><br><br>这个选择在<span class="ancient-wisdom">命运的长河</span>中留下了印记，你与${gameState.pet.name}的<span class="nature-element">心灵羁绊</span>更加深厚了...`);
+            }
+        }
+
+        // 进化宠物
+        function evolvePet(evolutionTarget) {
+            gameState.pet.name = evolutionTarget.name;
+            gameState.pet.species = evolutionTarget.species || evolutionTarget.name;
+            gameState.pet.level += 5;
+            gameState.pet.bond += 20;
+            
+            // 更新进化阶段
+            if (gameState.pet.stage === 'juvenile') gameState.pet.stage = 'growth';
+            else if (gameState.pet.stage === 'growth') gameState.pet.stage = 'mature';
+            else if (gameState.pet.stage === 'mature') gameState.pet.stage = 'complete';
+            
+            updatePetDisplay();
+            updateEvolutionDisplay();
+            
+            displayStory(`<span class="special-highlight">进化的奇迹！</span><br><br>` +
+                `在<span class="ancient-wisdom">天地灵气</span>的见证下，${gameState.pet.name}完成了<span class="mythical-creature">生命的蜕变</span>！<br><br>` +
+                `它现在拥有了更加<span class="nature-element">强大的力量</span>，你们之间的<span class="special-highlight">心灵羁绊</span>也达到了新的高度。<br><br>` +
+                `<span class="mythical-creature">新的传说</span>正在等待着你们去书写...`);
+        }
+
+        // 检查升级
+        function checkLevelUp() {
+            const expNeeded = gameState.pet.level * 10;
+            if (gameState.pet.experience >= expNeeded) {
+                gameState.pet.level++;
+                gameState.pet.experience = 0;
+                
+                displayStory(`<span class="special-highlight">修为提升！</span><br><br>` +
+                    `在<span class="ancient-wisdom">不断的修行</span>中，${gameState.pet.name}的<span class="nature-element">灵力</span>达到了新的境界！<br><br>` +
+                    `现在它已经是<span class="mythical-creature">${gameState.pet.level}级</span>的强大存在了！`);
+            }
+        }
+
+        // 重置游戏
+        function resetGame() {
+            if (confirm('确定要重新开始这段山海经之旅吗？所有的回忆将会消散...')) {
+                gameState = {
+                    pet: {
+                        name: '小灵',
+                        level: 1,
+                        bond: 0,
+                        species: '未知灵体',
+                        stage: 'juvenile',
+                        experience: 0
+                    },
+                    isLoading: false,
+                    menuOpen: false
+                };
+                
+                updatePetDisplay();
+                updateEvolutionDisplay();
+                elements.sceneImage.classList.add('hidden');
+                elements.choicesContainer.classList.add('hidden');
+                
+                displayStory('在<span class="ancient-wisdom">时光的轮回</span>中，一切重新开始...<br><br>欢迎再次踏上<span class="mythical-creature">山海经</span>的神秘之旅！');
+            }
+        }
+
+        // 保存进度
+        function saveProgress() {
+            localStorage.setItem('spiritPetGame', JSON.stringify(gameState));
+        }
+
+        // 加载进度
+        function loadProgress() {
+            const saved = localStorage.getItem('spiritPetGame');
+            if (saved) {
+                try {
+                    const savedState = JSON.parse(saved);
+                    gameState.pet = savedState.pet || gameState.pet;
+                    updatePetDisplay();
+                    updateEvolutionDisplay();
+                } catch (error) {
+                    console.error('加载进度失败:', error);
+                }
+            }
+        }
+
+        // 设置加载状态
+        function setLoading(loading) {
+            gameState.isLoading = loading;
+            document.body.classList.toggle('loading', loading);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

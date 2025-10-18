@@ -57,6 +57,8 @@ class Database {
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
+        species TEXT NOT NULL,
+        rarity TEXT NOT NULL CHECK (rarity IN ('N', 'R', 'SR', 'SSR', 'SSS')),
         base_prompt TEXT NOT NULL,
         hp INTEGER DEFAULT 100,
         attack INTEGER DEFAULT 20,
@@ -69,6 +71,50 @@ class Database {
         last_evolution DATETIME DEFAULT CURRENT_TIMESTAMP,
         is_active BOOLEAN DEFAULT 1,
         FOREIGN KEY (user_id) REFERENCES users (id)
+      )`,
+
+      // 宠物背景故事和详细描述表
+      `CREATE TABLE IF NOT EXISTS pet_lore (
+        id TEXT PRIMARY KEY,
+        pet_id TEXT NOT NULL,
+        background_story TEXT NOT NULL,
+        detailed_description TEXT NOT NULL,
+        personality_traits TEXT, -- JSON格式存储性格特征
+        special_abilities TEXT, -- JSON格式存储特殊能力描述
+        origin_story TEXT, -- 起源故事
+        evolution_history TEXT, -- 进化历史记录
+        ai_generated_content TEXT, -- AI生成的额外内容
+        prompt_settings TEXT, -- 提示词设定
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pet_id) REFERENCES pets (id)
+      )`,
+
+      // 宠物种族模板表
+      `CREATE TABLE IF NOT EXISTS pet_species (
+        id TEXT PRIMARY KEY,
+        species_name TEXT UNIQUE NOT NULL,
+        category TEXT NOT NULL, -- dragon, nature, mystic, etc.
+        base_attributes TEXT NOT NULL, -- JSON格式存储基础属性
+        rarity_weights TEXT NOT NULL, -- JSON格式存储稀有度权重
+        description_template TEXT NOT NULL,
+        lore_template TEXT NOT NULL,
+        special_traits TEXT, -- JSON格式存储种族特有特征
+        evolution_paths TEXT, -- JSON格式存储进化路径
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+      // 剧情模板库表
+      `CREATE TABLE IF NOT EXISTS story_templates (
+        id TEXT PRIMARY KEY,
+        template_name TEXT NOT NULL,
+        template_type TEXT NOT NULL, -- intro, encounter, evolution, battle, etc.
+        content_template TEXT NOT NULL,
+        trigger_conditions TEXT, -- JSON格式存储触发条件
+        variables TEXT, -- JSON格式存储可替换变量
+        rarity_specific BOOLEAN DEFAULT 0,
+        species_specific TEXT, -- 特定种族，NULL表示通用
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
       // 宠物词条表

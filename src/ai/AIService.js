@@ -12,21 +12,27 @@ class AIService {
     this.services = {
       // 主服务（用于内容生成）
       primary: {
-        apiUrl: process.env.AI_API_URL,
-        apiKey: process.env.AI_API_KEY,
-        modelName: process.env.AI_MODEL_NAME
+        apiUrl: process.env.AI_API_URL || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+        apiKey: process.env.AI_API_KEY || '2ffe7955-a0a1-4238-93cd-d354c2c6d7ec',
+        modelName: process.env.AI_MODEL_NAME || 'kimi-k2-250905'
       },
       // 数值服务（用于精确输出，可选）
       numerical: {
-        apiUrl: process.env.AI_NUMERICAL_API_URL || process.env.AI_API_URL,
-        apiKey: process.env.AI_NUMERICAL_API_KEY || process.env.AI_API_KEY,
-        modelName: process.env.AI_NUMERICAL_MODEL || process.env.AI_MODEL_NAME
+        apiUrl: process.env.AI_NUMERICAL_API_URL || process.env.AI_API_URL || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+        apiKey: process.env.AI_NUMERICAL_API_KEY || process.env.AI_API_KEY || '2ffe7955-a0a1-4238-93cd-d354c2c6d7ec',
+        modelName: process.env.AI_NUMERICAL_MODEL || process.env.AI_MODEL_NAME || 'kimi-k2-250905'
       },
       // 创意服务（用于故事生成，可选）
       creative: {
-        apiUrl: process.env.AI_CREATIVE_API_URL || process.env.AI_API_URL,
-        apiKey: process.env.AI_CREATIVE_API_KEY || process.env.AI_API_KEY,
-        modelName: process.env.AI_CREATIVE_MODEL || process.env.AI_MODEL_NAME
+        apiUrl: process.env.AI_CREATIVE_API_URL || process.env.AI_API_URL || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+        apiKey: process.env.AI_CREATIVE_API_KEY || process.env.AI_API_KEY || '2ffe7955-a0a1-4238-93cd-d354c2c6d7ec',
+        modelName: process.env.AI_CREATIVE_MODEL || process.env.AI_MODEL_NAME || 'kimi-k2-250905'
+      },
+      // 图像生成服务（即梦4.0）
+      image: {
+        apiUrl: process.env.AI_IMAGE_API_URL || 'https://ark.cn-beijing.volces.com/api/v3/images/generate',
+        apiKey: process.env.AI_IMAGE_API_KEY || '4b24c728-0bd9-4e0c-9a96-670f03a458cb',
+        modelName: process.env.AI_IMAGE_MODEL || 'ep-20250930175835-vxgn4'
       }
     };
     
@@ -136,7 +142,9 @@ class AIService {
         'Authorization': `Bearer ${service.apiKey}`,
         'Content-Type': 'application/json'
       },
-      timeout: 30000 // 30秒超时
+      timeout: 15000,
+      proxy: false,
+      httpsAgent: new (require('https').Agent)({ keepAlive: true })
     });
 
     if (!response.data || !response.data.choices || !response.data.choices[0]) {
@@ -221,6 +229,240 @@ class AIService {
   }
 
   /**
+   * 生成宠物外貌图像（使用即梦4.0）
+   */
+  async generatePetImage(pet, options = {}) {
+    const service = this.services.image;
+    
+    if (!service.apiUrl || !service.apiKey) {
+      throw new Error('Image generation service not configured');
+    }
+
+    // 构建宠物外貌描述prompt
+    const imagePrompt = this.buildPetImagePrompt(pet, options);
+    
+    try {
+      logger.info(`Generating pet image for ${pet.name || pet.race}`);
+      
+      const requestData = {
+        model: service.modelName,
+        prompt: imagePrompt,
+        sequential_image_generation: "disabled",
+        response_format: "url",
+        size: options.size || "2K",
+        stream: false,
+        watermark: options.watermark !== false // 默认开启水印
+      };
+
+      const response = await axios.post(service.apiUrl, requestData, {
+        headers: {
+          'Authorization': `Bearer ${service.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000, // 图像生成需要更长时间
+        proxy: false,
+        httpsAgent: new (require('https').Agent)({ keepAlive: true })
+      });
+
+      if (!response.data || !response.data.data || !response.data.data[0]) {
+        throw new Error('Invalid response format from image generation API');
+      }
+
+      const imageUrl = response.data.data[0].url;
+      logger.info(`Pet image generated successfully: ${imageUrl}`);
+      
+      return {
+        imageUrl: imageUrl,
+        prompt: imagePrompt,
+        petName: pet.name || pet.race,
+        generatedAt: new Date().toISOString()
+      };
+
+    } catch (error) {
+      logger.error(`Image generation failed for pet ${pet.name || pet.race}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 构建宠物图像生成prompt
+   */
+  buildPetImagePrompt(pet, options = {}) {
+    const style = options.style || 'fantasy';
+    const environment = options.environment || 'natural';
+    
+    // 基础宠物信息
+    const race = pet.race || '神秘生物';
+    const attribute = pet.attribute || '未知';
+    const specialWord = pet.specialWord || '';
+    const rarity = pet.rarity || 'common';
+    
+    // 根据稀有度调整画面质量描述
+    const qualityMap = {
+      'ssr': '传说级画质，史诗级视觉效果，神话般的光影，极致细节，4K超高清',
+      'sr': '稀有级画质，精美视觉效果，华丽光影，丰富细节，高清画质',
+      'r': '优质画质，良好视觉效果，自然光影，清晰细节',
+      'n': '标准画质，基础视觉效果，柔和光影'
+    };
+    
+    // 根据属性调整色彩和特效
+    const attributeEffects = {
+      '火': '火焰特效，暖色调，橙红光芒，燃烧粒子效果',
+      '冰': '冰霜特效，冷色调，蓝白光芒，冰晶粒子效果',
+      '雷': '雷电特效，紫蓝色调，电光闪烁，能量粒子效果',
+      '风': '风流特效，青绿色调，气流可视化，羽毛飘散效果',
+      '土': '大地特效，棕黄色调，岩石纹理，尘土飞扬效果',
+      '水': '水流特效，蓝色调，水珠反射，波纹涟漪效果',
+      '光': '圣光特效，金白色调，神圣光环，光粒子效果',
+      '暗': '暗影特效，深紫黑色调，阴影缭绕，暗能量效果'
+    };
+    
+    // 根据种族调整外形特征
+    const raceFeatures = {
+      '龙': '威严的龙族特征，鳞片闪烁，强壮体型，锐利爪牙',
+      '狐': '优雅的狐族特征，毛发柔顺，灵动眼神，多条尾巴',
+      '狼': '野性的狼族特征，肌肉发达，锐利眼神，厚实毛发',
+      '鸟': '华美的鸟族特征，羽毛绚丽，展翅姿态，锐利鸟喙',
+      '蜥': '神秘的蜥蜴特征，鳞片纹理，敏捷体型，变色能力',
+      '精': '空灵的精灵特征，半透明身体，发光效果，轻盈姿态'
+    };
+    
+    // 构建完整prompt
+    let prompt = `${race}，${attribute}属性`;
+    
+    if (specialWord) {
+      prompt += `，${specialWord}特质`;
+    }
+    
+    // 添加种族特征
+    const raceKey = Object.keys(raceFeatures).find(key => race.includes(key));
+    if (raceKey) {
+      prompt += `，${raceFeatures[raceKey]}`;
+    }
+    
+    // 添加属性特效
+    const effectKey = Object.keys(attributeEffects).find(key => attribute.includes(key));
+    if (effectKey) {
+      prompt += `，${attributeEffects[effectKey]}`;
+    }
+    
+    // 添加环境和风格
+    const environmentDesc = {
+      'natural': '自然环境背景，森林或草原',
+      'mystical': '神秘环境背景，魔法阵或古遗迹',
+      'elemental': '元素环境背景，对应属性的自然场景',
+      'battle': '战斗环境背景，竞技场或战场'
+    };
+    
+    prompt += `，${environmentDesc[environment] || environmentDesc.natural}`;
+    
+    // 添加画质要求
+    prompt += `，${qualityMap[rarity] || qualityMap.n}`;
+    
+    // 添加艺术风格
+    const styleDesc = {
+      'fantasy': '奇幻艺术风格，魔法世界观',
+      'anime': '动漫艺术风格，日式美术',
+      'realistic': '写实艺术风格，真实质感',
+      'cartoon': '卡通艺术风格，可爱风格'
+    };
+    
+    prompt += `，${styleDesc[style] || styleDesc.fantasy}`;
+    
+    // 添加通用质量提升词
+    prompt += '，精美插画，概念艺术，数字绘画，专业级作品，色彩丰富，构图完美，光影效果，质感真实';
+    
+    return prompt;
+  }
+
+  /**
+   * 批量生成宠物图像
+   */
+  async batchGeneratePetImages(pets, options = {}) {
+    const results = [];
+    const batchSize = 3; // 图像生成并发数限制
+    
+    for (let i = 0; i < pets.length; i += batchSize) {
+      const batch = pets.slice(i, i + batchSize);
+      const batchPromises = batch.map(pet => 
+        this.generatePetImage(pet, options).catch(error => ({
+          error: error.message,
+          petName: pet.name || pet.race
+        }))
+      );
+      
+      const batchResults = await Promise.allSettled(batchPromises);
+      results.push(...batchResults.map(r => 
+        r.status === 'fulfilled' ? r.value : r.reason
+      ));
+      
+      // 批次间延迟，避免API限制
+      if (i + batchSize < pets.length) {
+        await this.delay(2000); // 图像生成需要更长延迟
+      }
+    }
+    
+    return results;
+  }
+
+  /**
+   * 生成宠物进化前后对比图
+   */
+  async generateEvolutionComparisonImage(beforePet, afterPet, options = {}) {
+    // 构建进化对比的特殊prompt
+    const comparisonPrompt = this.buildEvolutionComparisonPrompt(beforePet, afterPet, options);
+    
+    const service = this.services.image;
+    
+    try {
+      const requestData = {
+        model: service.modelName,
+        prompt: comparisonPrompt,
+        sequential_image_generation: "disabled",
+        response_format: "url",
+        size: options.size || "2K",
+        stream: false,
+        watermark: options.watermark !== false
+      };
+
+      const response = await axios.post(service.apiUrl, requestData, {
+        headers: {
+          'Authorization': `Bearer ${service.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000,
+        proxy: false,
+        httpsAgent: new (require('https').Agent)({ keepAlive: true })
+      });
+
+      if (!response.data || !response.data.data || !response.data.data[0]) {
+        throw new Error('Invalid response format from image generation API');
+      }
+
+      return {
+        imageUrl: response.data.data[0].url,
+        prompt: comparisonPrompt,
+        evolutionType: 'comparison',
+        generatedAt: new Date().toISOString()
+      };
+
+    } catch (error) {
+      logger.error('Evolution comparison image generation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 构建进化对比图prompt
+   */
+  buildEvolutionComparisonPrompt(beforePet, afterPet, options = {}) {
+    const beforeDesc = `进化前：${beforePet.race}，${beforePet.attribute || ''}属性，${beforePet.specialWord || ''}`;
+    const afterDesc = `进化后：${afterPet.race}，${afterPet.attribute || ''}属性，${afterPet.specialWord || ''}`;
+    
+    return `${beforeDesc} 到 ${afterDesc} 的进化过程，左右对比构图，进化光效，变化过程，奇幻艺术风格，高质量插画，专业级作品，进化能量特效，光芒四射，神圣进化，史诗级视觉效果`;
+  }
+
+  /**
    * 生成缓存键
    */
   generateCacheKey(prompt, options, serviceType = 'primary') {
@@ -298,11 +540,24 @@ class AIService {
    * 获取服务状态
    */
   getStatus() {
+    const primary = this.services?.primary || {};
+    const image = this.services?.image || {};
     return {
-      configured: !!(this.apiUrl && this.apiKey),
-      cacheSize: this.cache.size,
-      requestCount: this.requestCount,
-      remainingRequests: this.maxRequestsPerHour - this.requestCount
+      text_service: {
+        configured: !!(primary.apiUrl && primary.apiKey),
+        model: primary.modelName,
+        api_url: primary.apiUrl
+      },
+      image_service: {
+        configured: !!(image.apiUrl && image.apiKey),
+        model: image.modelName,
+        api_url: image.apiUrl
+      },
+      cache: {
+        size: this.cache.size,
+        requestCount: this.requestCount,
+        remainingRequests: this.maxRequestsPerHour - this.requestCount
+      }
     };
   }
 }

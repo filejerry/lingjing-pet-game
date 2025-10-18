@@ -23,7 +23,7 @@ const logger = require('./utils/logger');
 class SpiritPetApp {
   constructor() {
     this.app = express();
-    this.port = process.env.PORT || 3000;
+    this.port = process.env.PORT || 14000;
     this.server = null;
   }
 

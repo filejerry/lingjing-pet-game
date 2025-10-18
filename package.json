@@ -7,7 +7,10 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "build": "echo 'Build completed'",
-    "vercel-build": "echo 'Vercel build completed'"
+    "vercel-build": "echo 'Vercel build completed'",
+    "test:supabase": "node scripts/test-supabase-connection.js",
+    "migrate:supabase": "node scripts/migrate-to-supabase.js",
+    "db:setup": "echo '请在Supabase SQL Editor中执行 scripts/supabase-schema.sql'"
   },
   "keywords": [
     "pet-game",
@@ -18,15 +21,19 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.0.0",
-    "dotenv": "^16.3.1",
-    "better-sqlite3": "^8.7.0",
+    "axios": "^1.12.2",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
-    "axios": "^1.5.0",
-    "winston": "^3.10.0"
+    "node-cron": "^3.0.3",
+    "pg": "^8.11.3",
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

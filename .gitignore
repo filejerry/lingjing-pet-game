@@ -10,6 +10,11 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase
+
+# 备份文件
+*.backup
+*.bak
 
 # Database
 data/

@@ -201,6 +201,63 @@ class EnhancedDatabase {
         response_context TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (pet_id) REFERENCES pets (id)
+      )`,
+
+      // 宠物图像记录表
+      `CREATE TABLE IF NOT EXISTS pet_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pet_id TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        prompt TEXT NOT NULL,
+        style TEXT DEFAULT 'fantasy',
+        environment TEXT DEFAULT 'natural',
+        size TEXT DEFAULT '2K',
+        generation_type TEXT DEFAULT 'single' CHECK (generation_type IN ('single', 'evolution', 'comparison')),
+        generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pet_id) REFERENCES pets (id)
+      )`,
+
+      // 宠物人格档案表
+      `CREATE TABLE IF NOT EXISTS pet_personas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pet_id TEXT NOT NULL UNIQUE,
+        profile_data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pet_id) REFERENCES pets (id)
+      )`,
+
+      // 图像重新生成记录表
+      `CREATE TABLE IF NOT EXISTS pet_image_regenerations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pet_id TEXT NOT NULL,
+        variation_count INTEGER DEFAULT 1,
+        is_paid INTEGER DEFAULT 0,
+        cost INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pet_id) REFERENCES pets (id)
+      )`,
+
+      // 系统事件记录表
+      `CREATE TABLE IF NOT EXISTS system_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        details TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+      // 新手引导进度表
+      `CREATE TABLE IF NOT EXISTS tutorial_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT UNIQUE NOT NULL,
+        current_stage TEXT NOT NULL,
+        start_time DATETIME NOT NULL,
+        progress_data TEXT DEFAULT '{}',
+        choices_data TEXT DEFAULT '{}',
+        completed INTEGER DEFAULT 0,
+        completed_at DATETIME,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`
     ];
 
@@ -302,7 +359,8 @@ class EnhancedDatabase {
     const tables = [
       'users', 'pets', 'pet_traits', 'pet_behaviors', 
       'player_activity', 'adventure_logs', 'battle_logs',
-      'adventure_events', 'pet_encounters', 'mythology_awakenings'
+      'adventure_events', 'pet_encounters', 'mythology_awakenings',
+      'chat_history', 'pet_images', 'pet_personas', 'pet_image_regenerations', 'system_events', 'tutorial_progress'
     ];
     
     for (const table of tables) {

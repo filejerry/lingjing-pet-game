@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>山海经灵境斗宠录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .scene-aura {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .immersive-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .story-stage {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .story-content {
+            min-height: 300px;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+
+        .story-line {
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease;
+        }
+
+        .story-line.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .story-line.title {
+            font-size: 1.4em;
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .story-line.normal {
+            color: #e0e0e0;
+            text-align: center;
+        }
+
+        .choices-container {
+            display: none;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .choices-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .choice-button {
+            display: block;
+            width: 100%;
+            padding: 20px 25px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 15px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 1.1em;
+            text-align: left;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .choice-button:hover::before {
+            left: 100%;
+        }
+
+        .choice-button:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+            border-color: rgba(255, 215, 0, 0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.2em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* 特殊标记样式 */
+        .special-marker {
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .creature-marker {
+            color: #4a9eff;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
+        }
+
+        .world-tree-marker {
+            color: #32cd32;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(50, 205, 50, 0.6);
+        }
+
+        .ai-marker {
+            color: #ff6b6b;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+        }
+
+        /* 互动面板样式 */
+        .interaction-panel {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid #4a5568;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .interaction-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .interaction-header h3 {
+            color: #ffd700;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .interaction-header p {
+            color: #a0aec0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .choice-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .choice-btn {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #7c8df0 0%, #8a5cb8 100%);
+        }
+
+        .choice-icon {
+            font-size: 32px;
+            margin-right: 20px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .choice-text strong {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .choice-text small {
+            display: block;
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="scene-aura"></div>
+    
+    <!-- 右上角控制面板 -->
+    <div class="control-panel">
+        <button class="control-btn" id="btnStoryStart">开始故事</button>
+        <button class="control-btn" id="btnRestart">重新开始</button>
+        <button class="control-btn" id="btnPanel">面板</button>
+    </div>
+
+    <div class="immersive-container">
+        <div class="story-stage">
+            <div class="story-content" id="storyContent">
+                <div class="loading">正在唤醒世界树的记忆</div>
+            </div>
+            <div class="choices-container" id="choicesContainer">
+                <!-- 选择按钮将在这里动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            currentPet: null,
+            petCount: 0,
+            bestRarity: '-',
+            evolutionCount: 0
+        };
+
+        // 应用特殊标记
+        function applySpecialMarkers(text) {
+            return text
+                .replace(/※([^※]+)※/g, '<span class="special-marker">※$1※</span>')
+                .replace(/◉([^◉]+)◉/g, '<span class="creature-marker">◉$1◉</span>')
+                .replace(/※\s*世界树\s*※/g, '<span class="world-tree-marker">※ 世界树 ※</span>')
+                .replace(/◉\s*AI[^◉]*◉/g, '<span class="ai-marker">$&</span>');
+        }
+
+        // 显示故事行
+        function showStoryLinesWithClasses(lines, container, callback) {
+            container.innerHTML = '';
+            
+            lines.forEach((line, index) => {
+                setTimeout(() => {
+                    const lineElement = document.createElement('div');
+                    lineElement.className = `story-line ${line.class}`;
+                    lineElement.innerHTML = applySpecialMarkers(line.text);
+                    container.appendChild(lineElement);
+                    
+                    setTimeout(() => {
+                        lineElement.classList.add('show');
+                    }, 200);
+                    
+                    if (index === lines.length - 1 && callback) {
+                        setTimeout(callback, 1500);
+                    }
+                }, index * 1500);
+            });
+        }
+
+        // 显示选择
+        function showChoices() {
+            const pool = [
+                { text: "我听到了古老的龙吟声，仿佛来自时间的深处，充满了威严与神秘...", type: "dragon", rarity: 0.15 },
+                { text: "我感受到了自然的呼唤，花草树木都在向我诉说着生命的奥秘...", type: "nature", rarity: 0.1 },
+                { text: "我看见了星空中的幻象，无数的可能性在虚空中闪烁着光芒...", type: "mystic", rarity: 0.12 },
+                { text: "夜幕低垂，影子在林间穿梭，你仿佛听见残影呼唤…", type: "shadow", rarity: 0.08 },
+                { text: "时间像水流倒转，古老的钟鸣在心底回响…", type: "chrono", rarity: 0.2 },
+                { text: "群星缓缓旋转，天象似在暗示命运的分岔…", type: "stellar", rarity: 0.18 },
+                { text: "潮汐拍岸，你在雾海中看见巨鲲的轮廓…", type: "ocean", rarity: 0.14 },
+                { text: "远方山脉震动，岩土之力回应你的脚步…", type: "earth", rarity: 0.06 },
+                { text: "炽焰升腾，火羽在空中划出灼亮的轨迹…", type: "flame", rarity: 0.11 },
+                { text: "寒霜降临，晶花在指尖绽放…", type: "frost", rarity: 0.09 },
+                { text: "雷霆贯空，电纹在地面蜿蜒…", type: "thunder", rarity: 0.13 },
+                { text: "灵泉涌动，你感到灵识被轻触…", type: "spirit", rarity: 0.07 }
+            ];
+
+            // 随机事件池
+            const specialEvents = [
+                { text: "※ 世界树的枝叶突然发光，你感受到了创世的力量在召唤...", type: "genesis", rarity: 0.5 },
+                { text: "※ 虚空裂缝出现，异界的气息从中涌出...", type: "void", rarity: 0.4 },
+                { text: "※ 远古封印松动，被禁锢的神兽发出低吟...", type: "ancient", rarity: 0.45 },
+                { text: "※ 命运之轮转动，你听见了宿命的呼唤...", type: "destiny", rarity: 0.35 },
+                { text: "※ 混沌之力涌动，原始的创造力在你周围聚集...", type: "chaos", rarity: 0.3 }
+            ];
+
+            let finalPool = [...pool];
+            
+            // 15%概率添加特殊事件
+            if (Math.random() < 0.15) {
+                const randomEvent = specialEvents[Math.floor(Math.random() * specialEvents.length)];
+                finalPool.push(randomEvent);
+            }
+
+            // 选择3-4个选项
+            const count = Math.floor(3 + Math.random() * 2);
+            const choices = [];
+            const usedIndices = new Set();
+            
+            while (choices.length < count && choices.length < finalPool.length) {
+                const randomIndex = Math.floor(Math.random() * finalPool.length);
+                if (!usedIndices.has(randomIndex)) {
+                    choices.push(finalPool[randomIndex]);
+                    usedIndices.add(randomIndex);
+                }
+            }
+
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                setTimeout(() => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.innerHTML = applySpecialMarkers(choice.text);
+                    button.addEventListener('click', () => selectChoice(choice));
+                    button.style.opacity = '0';
+                    button.style.transform = 'translateY(20px)';
+                    choicesContainer.appendChild(button);
+                    
+                    setTimeout(() => {
+                        button.style.transition = 'all 0.8s ease';
+                        button.style.opacity = '1';
+                        button.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 500);
+            });
+
+            choicesContainer.style.display = 'block';
+            setTimeout(() => {
+                choicesContainer.classList.add('show');
+            }, 500);
+        }
+
+        // 选择处理
+        async function selectChoice(choice) {
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.style.transition = 'all 0.8s ease';
+            choicesContainer.style.opacity = '0';
+            choicesContainer.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                choicesContainer.style.display = 'none';
+                
+                const loadingLines = [
+                    { text: "你的选择引起了世界树的共鸣...", class: "normal" },
+                    { text: "◉ 正在分析你的灵魂频率 ◉", class: "normal" },
+                    { text: "※ 世界树 ※ 正在为你寻找最合适的伙伴...", class: "normal" },
+                    { text: "请稍等，奇迹即将降临...", class: "normal" }
+                ];
+
+                const storyContent = document.getElementById('storyContent');
+                showStoryLinesWithClasses(loadingLines, storyContent, () => {
+                    generatePet(choice.type);
+                });
+            }, 800);
+        }
+
+        // 生成宠物
+        async function generatePet(choiceType) {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const pet = await mockPetGeneration(choiceType);
+                
+                gameState.currentPet = pet;
+                gameState.petCount++;
+                
+                showPetStory(pet);
+                
+            } catch (error) {
+                console.error('生成宠物失败:', error);
+                showError('生成宠物时发生错误，请重试');
+            }
+        }
+
+        // 模拟宠物生成
+        async function mockPetGeneration(choiceType) {
+            // 增强的稀有度系统
+            let rarityModifier = 0;
+            const specialTypes = ['genesis', 'void', 'ancient', 'destiny', 'chaos'];
+            
+            if (specialTypes.includes(choiceType)) {
+                rarityModifier = 0.1;
+            }
+            
+            const hour = new Date().getHours();
+            if (hour >= 23 || hour <= 1) rarityModifier += 0.05;
+            if (hour >= 6 && hour <= 8) rarityModifier += 0.03;
+            if (Math.random() < 0.1) rarityModifier += 0.08;
+            
+            const rarityRoll = Math.random() - rarityModifier;
+            let rarity, rarityClass;
+            
+            if (rarityRoll < 0.005) {
+                rarity = 'LEGEND';
+                rarityClass = 'rarity-legend';
+            } else if (rarityRoll < 0.02) {
+                rarity = 'SSS';
+                rarityClass = 'rarity-sss';
+            } else if (rarityRoll < 0.08) {
+                rarity = 'SSR';
+                rarityClass = 'rarity-ssr';
+            } else if (rarityRoll < 0.20) {
+                rarity = 'SR';
+                rarityClass = 'rarity-sr';
+            } else if (rarityRoll < 0.45) {
+                rarity = 'R';
+                rarityClass = 'rarity-r';
+            } else {
+                rarity = 'N';
+                rarityClass = 'rarity-n';
+            }
+
+            const petTemplates = {
+                dragon: {
+                    species: ['火龙', '冰龙', '雷龙', '暗龙', '光龙', '青龙', '金龙', '银龙', '黑龙', '白龙'],
+                    attributes: ['烈焰', '寒冰', '雷鸣', '暗影', '圣光', '毁灭', '创造', '混沌', '秩序', '虚无'],
+                    specials: ['绝迹', '传说', '古老', '神秘', '永恒', '不朽', '至尊', '霸主', '帝王', '神圣'],
+                    emoji: '🐉'
+                },
+                nature: {
+                    species: ['木精', '花仙', '树灵', '草妖', '藤怪', '森王', '花神', '树祖', '叶妖', '根魔'],
+                    attributes: ['生机', '治愈', '成长', '繁茂', '新生', '凋零', '轮回', '季节', '丰收', '枯荣'],
+                    specials: ['盎然', '翠绿', '芬芳', '茂盛', '生机', '原始', '野性', '纯净', '和谐', '永生'],
+                    emoji: '🌿'
+                },
+                mystic: {
+                    species: ['幻灵', '星兽', '虚影', '梦魇', '时灵', '空灵', '魂体', '意念', '预言', '占卜'],
+                    attributes: ['幻象', '星光', '虚无', '梦境', '时间', '空间', '灵魂', '意识', '预知', '宿命'],
+                    specials: ['神秘', '缥缈', '虚幻', '永恒', '无限', '超脱', '觉醒', '启示', '真理', '智慧'],
+                    emoji: '✨'
+                },
+                genesis: {
+                    species: ['创世', '原初', '混沌', '太初', '开天', '辟地', '造物', '生命', '意志', '本源'],
+                    attributes: ['创造', '毁灭', '重生', '演化', '起源', '终结', '循环', '平衡', '和谐', '统一'],
+                    specials: ['至高', '无上', '唯一', '绝对', '完美', '永恒', '无限', '全知', '全能', '超越'],
+                    emoji: '🌟'
+                }
+            };
+
+            const typeMap = {
+                shadow: 'mystic', chrono: 'mystic', stellar: 'mystic', spirit: 'mystic',
+                ocean: 'nature', earth: 'nature', flame: 'dragon', frost: 'dragon', thunder: 'dragon',
+                void: 'genesis', ancient: 'genesis', destiny: 'genesis', chaos: 'genesis'
+            };
+
+            const resolvedType = petTemplates[choiceType] ? choiceType : (typeMap[choiceType] || 'nature');
+            const template = petTemplates[resolvedType];
+            const species = template.species[Math.floor(Math.random() * template.species.length)];
+            const attribute = template.attributes[Math.floor(Math.random() * template.attributes.length)];
+            const special = template.specials[Math.floor(Math.random() * template.specials.length)];
+
+            const rarityMultiplier = {
+                'LEGEND': 2.5, 'SSS': 2.0, 'SSR': 1.5, 'SR': 1.3, 'R': 1.1, 'N': 1.0
+            };
+            
+            const multiplier = rarityMultiplier[rarity];
+            
+            return {
+                id: Date.now().toString(),
+                name: `${species}*${attribute}*${special}`,
+                species: species,
+                attribute: attribute,
+                special: special,
+                rarity: rarity,
+                rarityClass: rarityClass,
+                emoji: template.emoji,
+                attributes: {
+                    hp: Math.floor((80 + Math.floor(Math.random() * 40)) * multiplier),
+                    attack: Math.floor((15 + Math.floor(Math.random() * 20)) * multiplier),
+                    defense: Math.floor((10 + Math.floor(Math.random() * 15)) * multiplier),
+                    speed: Math.floor((8 + Math.floor(Math.random() * 12)) * multiplier),
+                    magic: Math.floor((12 + Math.floor(Math.random() * 18)) * multiplier)
+                }
+            };
+        }
+
+        // 显示宠物故事
+        function showPetStory(pet) {
+            const nameParts = pet.name.split('*');
+            const baseName = nameParts[0] || pet.name;
+            const attribute = nameParts[1] || '未知';
+            const special = nameParts[2] || '普通';
+            
+            pet.displayName = `${baseName}(${attribute}·${special})`;
+
+            // AI生成丰富的宠物故事内容
+            const aiStoryContent = generateAIPetStory(pet);
+
+            const storyLines = [
+                { text: `✦ ※ 世界树 ※ 的光芒闪烁，${pet.displayName} 出现在你面前！`, class: "title" },
+                { text: `◉ 外观描述 ◉：${aiStoryContent.appearance}`, class: "normal" },
+                { text: `◉ 性格分析 ◉：${aiStoryContent.personality}`, class: "normal" },
+                { text: `◉ 背景故事 ◉：${aiStoryContent.background}`, class: "normal" },
+                { text: `◉ 互动建议 ◉：${aiStoryContent.suggestion}`, class: "normal" },
+                { text: "选择你们的第一次互动方式：", class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(storyLines, storyContent, () => {
+                showAIInteractionChoices(pet);
+            });
+        }
+
+        // AI生成宠物故事内容
+        function generateAIPetStory(pet) {
+            const appearanceTemplates = [
+                `这只 ${pet.species} 身披 ${pet.attribute} 之力的光辉，${pet.special} 的气质让人过目难忘。它的眼中闪烁着智慧的光芒。`,
+                `${pet.species} 的身形在 ${pet.attribute} 能量的包围下显得格外神秘，散发着 ${pet.special} 的威严，仿佛来自另一个世界。`,
+                `眼前的 ${pet.species} 浑身闪烁着 ${pet.attribute} 的光芒，${pet.special} 的力量在其周围流转，展现出非凡的存在感。`
+            ];
+
+            const personalityTemplates = [
+                `性格温和而坚定，是天生的 ※ 守护者 ※。它能感知你内心的善意，愿意与真诚的人建立深厚的羁绊。`,
+                `这只灵兽性情高傲而独立，只有真正的强者才能获得它的认可。它的智慧超越常人，是理想的 ◉ 战略伙伴 ◉。`,
+                `既神秘又亲近，仿佛能洞察一切。它显得既古老又年轻，承载着无数的秘密和智慧。`
+            ];
+
+            const backgroundTemplates = [
+                `据 ※ 世界树 ※ 的记忆显示，这只 ${pet.species} 来自 ◉ 昆仑山 ◉，曾是古代传说中的存在，守护着重要的秘密。`,
+                `在遥远的过去，${pet.species} 一族是 ※ 世界树 ※ 的守护者，拥有连接不同世界的神秘力量。`,
+                `这只 ${pet.species} 承载着古老的使命，它的出现预示着新的冒险即将开始。`
+            ];
+
+            const suggestionTemplates = [
+                `建议以温和的方式接近，它会回应你的善意。可以尝试心灵沟通或者简单的肢体接触。`,
+                `保持尊重的距离，观察它的行为模式。这类灵兽需要时间来评估伙伴的价值。`,
+                `可以直接进行深度交流，它的智慧足以理解复杂的概念和情感。`
+            ];
+
+            return {
+                appearance: appearanceTemplates[Math.floor(Math.random() * appearanceTemplates.length)],
+                personality: personalityTemplates[Math.floor(Math.random() * personalityTemplates.length)],
+                background: backgroundTemplates[Math.floor(Math.random() * backgroundTemplates.length)],
+                suggestion: suggestionTemplates[Math.floor(Math.random() * suggestionTemplates.length)]
+            };
+        }
+
+        // 显示AI互动选择
+        function showAIInteractionChoices(pet) {
+            const choices = [
+                { 
+                    text: "◉ 温和接触 ◉", 
+                    description: "轻柔地与灵宠建立初步联系",
+                    action: () => startAIInteraction(pet, 'gentle')
+                },
+                { 
+                    text: "◉ 观察行为 ◉", 
+                    description: "仔细观察灵宠的行为模式和特征",
+                    action: () => startAIInteraction(pet, 'observe')
+                },
+                { 
+                    text: "◉ 心灵连接 ◉", 
+                    description: "尝试与灵宠建立深层的心灵沟通",
+                    action: () => startAIInteraction(pet, 'communicate')
+                }
+            ];
+
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                setTimeout(() => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.innerHTML = `${applySpecialMarkers(choice.text)}<br><small style="opacity:0.7;font-size:0.8em;">${choice.description}</small>`;
+                    button.addEventListener('click', choice.action);
+                    button.style.opacity = '0';
+                    button.style.transform = 'translateY(20px)';
+                    choicesContainer.appendChild(button);
+                    
+                    setTimeout(() => {
+                        button.style.transition = 'all 0.8s ease';
+                        button.style.opacity = '1';
+                        button.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 300);
+            });
+
+            choicesContainer.style.display = 'block';
+            setTimeout(() => {
+                choicesContainer.classList.add('show');
+            }, 500);
+        }
+
+        // 开始AI互动
+        function startAIInteraction(pet, interactionType) {
+            const aiResponse = generateAIInteractionResponse(pet, interactionType);
+            
+            const responseLines = [
+                { text: `◉ 实时反应 ◉：${aiResponse.petReaction}`, class: "normal" },
+                { text: `◉ 深度分析 ◉：${aiResponse.analysis}`, class: "normal" },
+                { text: `◉ 策略建议 ◉：${aiResponse.strategy}`, class: "normal" },
+                { text: "继续你们的冒险：", class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(responseLines, storyContent, () => {
+                showAIGameModes(pet);
+            });
+        }
+
+        // AI生成互动响应
+        function generateAIInteractionResponse(pet, interactionType) {
+            const responses = {
+                gentle: {
+                    petReaction: `${pet.displayName} 轻轻蹭了蹭你的手，眼中闪过温暖的光芒。${pet.attribute} 的能量在接触点轻柔地流转。`,
+                    analysis: `这只 ${pet.species} 表现出高度的亲和力和信任度。其 ${pet.special} 特质使它能够快速识别善意。`,
+                    strategy: `建议继续温和互动，可以尝试更深入的情感交流。这种类型的宠物适合长期培养关系。`
+                },
+                observe: {
+                    petReaction: `${pet.displayName} 注意到你的观察，开始有意识地展示自己的能力。${pet.attribute} 的力量在它周围形成美丽的光环。`,
+                    analysis: `这只 ${pet.species} 具有高智商和强烈的自我意识。它理解被观察的意义并做出相应反应。`,
+                    strategy: `可以进行更复杂的互动测试。这类宠物适合战略性培养和技能开发。`
+                },
+                communicate: {
+                    petReaction: `你感受到温暖的意念波动，${pet.displayName} 正在尝试与你建立心灵连接。你们之间似乎有了某种共鸣。`,
+                    analysis: `这只 ${pet.species} 拥有强大的精神力量和沟通能力。${pet.special} 的特质增强了它的感知能力。`,
+                    strategy: `心灵连接已建立，可以尝试更高级的合作模式。这种羁绊将大大提升战斗和探索效率。`
+                }
+            };
+
+            return responses[interactionType] || responses.gentle;
+        }
+
+        // 显示AI游戏模式
+        function showAIGameModes(pet) {
+            const modes = [
+                { 
+                    text: "◉ 冒险模式 ◉", 
+                    description: "体验动态冒险事件和智能NPC互动",
+                    action: () => startAIAdventure(pet)
+                },
+                { 
+                    text: "◉ 训练模式 ◉", 
+                    description: "制定个性化训练计划和成长路径",
+                    action: () => startAITraining(pet)
+                },
+                { 
+                    text: "◉ 探索模式 ◉", 
+                    description: "探索神秘世界和隐藏剧情",
+                    action: () => startAIExploration(pet)
+                }
+            ];
+
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            
+            modes.forEach((mode, index) => {
+                setTimeout(() => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.innerHTML = `${applySpecialMarkers(mode.text)}<br><small style="opacity:0.7;font-size:0.8em;">${mode.description}</small>`;
+                    button.addEventListener('click', mode.action);
+                    button.style.opacity = '0';
+                    button.style.transform = 'translateY(20px)';
+                    choicesContainer.appendChild(button);
+                    
+                    setTimeout(() => {
+                        button.style.transition = 'all 0.8s ease';
+                        button.style.opacity = '1';
+                        button.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 300);
+            });
+
+            choicesContainer.style.display = 'block';
+            setTimeout(() => {
+                choicesContainer.classList.add('show');
+            }, 500);
+        }
+
+        // AI冒险模式
+        function startAIAdventure(pet) {
+            const adventureEvent = generateAIAdventureEvent(pet);
+            
+            const eventLines = [
+                { text: `◉ 事件发生 ◉：${adventureEvent.title}`, class: "title" },
+                { text: `◉ 场景描述 ◉：${adventureEvent.description}`, class: "normal" },
+                { text: `◉ 角色对话 ◉：${adventureEvent.npcDialogue}`, class: "normal" },
+                { text: "选择你的行动：", class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(eventLines, storyContent, () => {
+                showAIAdventureChoices(pet, adventureEvent);
+            });
+        }
+
+        // 生成AI冒险事件
+        function generateAIAdventureEvent(pet) {
+            const events = [
+                {
+                    title: "神秘商人的邀请",
+                    description: `在 ◉ 昆仑山 ◉ 的边缘，你们遇到了一位神秘的商人。他的货物散发着奇异的光芒。`,
+                    npcDialogue: `"年轻的旅者，我看出你的 ${pet.species} 很不寻常。我这里有些特殊的物品，或许对你们有用..."`
+                },
+                {
+                    title: "远古遗迹的发现",
+                    description: `${pet.displayName} 的 ${pet.attribute} 力量与一处远古遗迹产生了共鸣，石门缓缓开启。`,
+                    npcDialogue: `遗迹中传来古老的声音："拥有 ${pet.special} 之力的存在，你们有资格接受试炼..."`
+                },
+                {
+                    title: "迷失旅者的求助",
+                    description: `一位迷失的旅者向你们求助，但他的身上散发着不寻常的气息。`,
+                    npcDialogue: `"请帮帮我！我在这里迷路了好久...你的 ${pet.species} 看起来很强大，一定能帮到我！"`
+                }
+            ];
+
+            return events[Math.floor(Math.random() * events.length)];
+        }
+
+        // 显示AI冒险选择
+        function showAIAdventureChoices(pet, event) {
+            const choices = [
+                { 
+                    text: "◉ 智能分析 ◉ 谨慎应对", 
+                    description: "仔细分析风险并制定最优策略"
+                },
+                { 
+                    text: "◉ 战斗预测 ◉ 直接行动", 
+                    description: "计算战斗结果和潜在收益"
+                },
+                { 
+                    text: "◉ 外交沟通 ◉ 尝试对话", 
+                    description: "通过对话寻找和平解决方案"
+                }
+            ];
+
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                setTimeout(() => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.innerHTML = `${applySpecialMarkers(choice.text)}<br><small style="opacity:0.7;font-size:0.8em;">${choice.description}</small>`;
+                    button.addEventListener('click', () => {
+                        showAIResult(pet, choice.text);
+                    });
+                    button.style.opacity = '0';
+                    button.style.transform = 'translateY(20px)';
+                    choicesContainer.appendChild(button);
+                    
+                    setTimeout(() => {
+                        button.style.transition = 'all 0.8s ease';
+                        button.style.opacity = '1';
+                        button.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 300);
+            });
+
+            choicesContainer.style.display = 'block';
+            setTimeout(() => {
+                choicesContainer.classList.add('show');
+            }, 500);
+        }
+
+        // 显示AI结果
+        function showAIResult(pet, choiceType) {
+            const results = [
+                `◉ 结果显示 ◉：你的选择获得了意想不到的成功！${pet.displayName} 的能力得到了提升。`,
+                `◉ 经验总结 ◉：通过这次冒险，你们的羁绊变得更加深厚，解锁了新的技能组合。`,
+                `◉ 奖励获得 ◉：获得了珍贵的 ※ 世界树果实 ※，可以用于强化宠物的核心属性。`
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            const resultLines = results.map(text => ({ text, class: "normal" }));
+            
+            showStoryLinesWithClasses(resultLines, storyContent, () => {
+                showAIGameModes(pet);
+            });
+        }
+
+        // AI训练模式
+        function startAITraining(pet) {
+            const trainingPlan = generateAITrainingPlan(pet);
+            
+            const planLines = [
+                { text: `◉ 训练计划 ◉：${trainingPlan.title}`, class: "title" },
+                { text: `◉ 能力评估 ◉：${trainingPlan.assessment}`, class: "normal" },
+                { text: `◉ 成长建议 ◉：${trainingPlan.recommendation}`, class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(planLines, storyContent, () => {
+                showAIGameModes(pet);
+            });
+        }
+
+        // 生成AI训练计划
+        function generateAITrainingPlan(pet) {
+            return {
+                title: `为 ${pet.species} 制定的专属训练方案`,
+                assessment: `基于 ${pet.attribute} 属性和 ${pet.special} 特质，这只宠物在战斗和探索方面都有很大潜力。`,
+                recommendation: `建议重点培养其 ${pet.attribute} 能力，同时加强与主人的心灵连接训练。`
+            };
+        }
+
+        // AI探索模式
+        function startAIExploration(pet) {
+            const explorationEvent = generateAIExplorationEvent(pet);
+            
+            const eventLines = [
+                { text: `◉ 世界探索 ◉：${explorationEvent.title}`, class: "title" },
+                { text: `◉ 环境描述 ◉：${explorationEvent.description}`, class: "normal" },
+                { text: `◉ 隐藏剧情 ◉：${explorationEvent.secret}`, class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(eventLines, storyContent, () => {
+                showAIGameModes(pet);
+            });
+        }
+
+        // 生成AI探索事件
+        function generateAIExplorationEvent(pet) {
+            const events = [
+                {
+                    title: "神秘的星辰海",
+                    description: `你们来到了传说中的 ◉ 星辰海 ◉，这里的每一滴水都蕴含着星辰的力量。`,
+                    secret: `${pet.displayName} 似乎对这里很熟悉，它的记忆中藏着关于这片海域的古老秘密...`
+                },
+                {
+                    title: "世界树的根须",
+                    description: `在地底深处，你们发现了 ※ 世界树 ※ 的巨大根须，散发着生命的光辉。`,
+                    secret: `这里隐藏着创世的奥秘，只有拥有特殊血统的生灵才能感知到其中的真相。`
+                }
+            ];
+
+            return events[Math.floor(Math.random() * events.length)];
+        }
+
+        // 显示错误
+        function showError(message) {
+            const storyContent = document.getElementById('storyContent');
+            storyContent.innerHTML = `<div class="story-line normal show" style="color: #ff6b6b;">${message}</div>`;
+        }
+
+        // 开始故事
+        function startStory() {
+            const introLines = [
+                { text: "山海经灵境斗宠录", class: "title" },
+                { text: "在这个由 ※ 世界树 ※ 支撑的神话世界中，古老的传说正在苏醒...", class: "normal" },
+                { text: "你站在 ◉ 世界树 ◉ 的根部，感受着来自不同方向的神秘召唤。", class: "normal" },
+                { text: "请选择你感应到的力量：", class: "normal" }
+            ];
+
+            const storyContent = document.getElementById('storyContent');
+            showStoryLinesWithClasses(introLines, storyContent, () => {
+                showChoices();
+            });
+        }
+
+        // 重新开始
+        function restartGame() {
+            gameState.currentPet = null;
+            gameState.petCount = 0;
+            gameState.bestRarity = '-';
+            gameState.evolutionCount = 0;
+            
+            const storyContent = document.getElementById('storyContent');
+            const choicesContainer = document.getElementById('choicesContainer');
+            
+            storyContent.innerHTML = '<div class="loading">正在唤醒世界树的记忆</div>';
+            choicesContainer.innerHTML = '';
+            choicesContainer.style.display = 'none';
+            
+            setTimeout(() => {
+                startStory();
+            }, 1000);
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnStoryStart').addEventListener('click', startStory);
+            document.getElementById('btnRestart').addEventListener('click', restartGame);
+            document.getElementById('btnPanel').addEventListener('click', () => {
+                alert('面板功能开发中...');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,26 +1,39 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  spirit-pet-game:
-    build: .
-    container_name: spirit-pet-chronicles
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spirit-pet-app
+    restart: unless-stopped
+    env_file:
+      - .env
     ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
+      - "14000:14000"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
-      - ./.env:/app/.env:ro
-    restart: unless-stopped
+      - ./public:/app/public:ro
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: ["CMD", "curl", "-f", "http://localhost:14000/health"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      timeout: 5s
+      retries: 5
 
-networks:
-  default:
-    name: spirit-pet-network
+  # 可选：Nginx 反向代理（将 443/80 转发到 app:14000）
+  # 如使用外部 Nginx，可删除此服务
+  nginx:
+    image: nginx:stable
+    container_name: spirit-pet-nginx
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      # 如需本容器终止TLS，请映射443并配置证书
+      # - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/usr/share/nginx/html:ro
+      # - ./deploy/certs:/etc/nginx/certs:ro
+    restart: unless-stopped

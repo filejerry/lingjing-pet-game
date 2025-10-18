@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>山海经灵境斗宠录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimSun', serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            line-height: 1.8;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+
+        /* 主要文字区域 */
+        .text-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .story-text {
+            margin-bottom: 30px;
+            text-align: justify;
+            letter-spacing: 0.5px;
+        }
+
+        .story-line {
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 1.2s ease;
+        }
+
+        .story-line.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .story-line.title {
+            font-size: 1.4em;
+            color: #d4af37;
+            text-align: center;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+
+        .story-line.emphasis {
+            color: #87ceeb;
+            font-style: italic;
+        }
+
+        .story-line.dialogue {
+            color: #98fb98;
+            padding-left: 20px;
+            border-left: 2px solid #98fb98;
+        }
+
+        /* 选择按钮 */
+        .choices {
+            margin-top: 40px;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .choices.show {
+            opacity: 1;
+        }
+
+        .choice-item {
+            display: block;
+            width: 100%;
+            background: transparent;
+            border: 1px solid #444;
+            color: #e8e8e8;
+            padding: 15px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: left;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            font-family: inherit;
+        }
+
+        .choice-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+        .choice-item:focus {
+            outline: none;
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #d4af37;
+        }
+
+        /* 右上角控制面板 */
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .panel-toggle {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #444;
+            color: #e8e8e8;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .panel-toggle:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+        }
+
+        .panel-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #444;
+            border-radius: 4px;
+            min-width: 200px;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .panel-menu.show {
+            display: block;
+        }
+
+        .menu-section {
+            border-bottom: 1px solid #333;
+            padding: 10px;
+        }
+
+        .menu-section:last-child {
+            border-bottom: none;
+        }
+
+        .menu-title {
+            color: #d4af37;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .menu-item {
+            display: block;
+            background: transparent;
+            border: none;
+            color: #e8e8e8;
+            padding: 5px 0;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .menu-item:hover {
+            color: #d4af37;
+        }
+
+        .status-display {
+            font-size: 11px;
+            color: #888;
+            margin: 2px 0;
+        }
+
+        /* 加载状态 */
+        .loading {
+            color: #d4af37;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* 特殊内容样式 */
+        .clue-item {
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .challenge-item {
+            color: #ff6b6b;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        .bond-item {
+            color: #4ecdc4;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .reward-item {
+            color: #45b7d1;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(69, 183, 209, 0.5);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .text-container {
+                padding: 20px 15px;
+            }
+            
+            body {
+                font-size: 15px;
+            }
+            
+            .control-panel {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <button class="panel-toggle" id="panelToggle">☰ 菜单</button>
+        <div class="panel-menu" id="panelMenu">
+            <div class="menu-section">
+                <div class="menu-title">游戏控制</div>
+                <button class="menu-item" onclick="showWelcomeStory()">开始新故事</button>
+                <button class="menu-item" onclick="restartGame()">重新开始</button>
+                <button class="menu-item" onclick="saveGame()">保存进度</button>
+                <button class="menu-item" onclick="loadGame()">加载进度</button>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-title">宠物状态</div>
+                <div class="status-display">名称: <span id="petName">未获得</span></div>
+                <div class="status-display">等级: <span id="petLevel">-</span></div>
+                <div class="status-display">经验: <span id="petExp">-</span></div>
+                <div class="status-display">羁绊: <span id="petBond">-</span></div>
+                <button class="menu-item" onclick="viewPetStatus()">查看详细状态</button>
+                <button class="menu-item" onclick="addExperience()">获得经验</button>
+                <button class="menu-item" onclick="checkEvolution()">检查进化</button>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-title">剧情系统</div>
+                <button class="menu-item" onclick="startStoryMode('shanhai_exploration')">山海经探索</button>
+                <button class="menu-item" onclick="startStoryMode('pet_growth')">宠物成长</button>
+                <button class="menu-item" onclick="startStoryMode('battle_scenarios')">战斗试炼</button>
+                <button class="menu-item" onclick="getCurrentStory()">当前剧情</button>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-title">系统信息</div>
+                <div class="status-display">服务器: <span id="serverStatus">检查中</span></div>
+                <button class="menu-item" onclick="testAPI()">测试API</button>
+                <button class="menu-item" onclick="clearLog()">清空日志</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-container">
+        <div id="storyContent">
+            <div class="story-line loading show">正在初始化山海经世界</div>
+        </div>
+        
+        <div class="choices" id="choicesContainer">
+            <!-- 选择按钮将在这里动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        const gameState = {
+            currentPet: {
+                name: '未获得',
+                species: '',
+                level: 0,
+                totalExp: 0,
+                bond: 0,
+                attribute: '',
+                stats: {}
+            },
+            currentPlayerId: 'player_' + Date.now(),
+            storyHistory: [],
+            isLoading: false
+        };
+
+        // 安全的DOM操作函数
+        function safeGetElement(id) {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Element with id '${id}' not found`);
+            }
+            return element;
+        }
+
+        function safeSetText(id, text) {
+            const element = safeGetElement(id);
+            if (element) {
+                element.textContent = text;
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing game...');
+            initializeGame();
+            setupEventListeners();
+            checkServerStatus();
+        });
+
+        // 初始化游戏
+        function initializeGame() {
+            setTimeout(() => {
+                showWelcomeStory();
+            }, 1500);
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 面板控制
+            const panelToggle = safeGetElement('panelToggle');
+            if (panelToggle) {
+                panelToggle.addEventListener('click', togglePanel);
+            }
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.control-panel')) {
+                    hidePanel();
+                }
+            });
+        }
+
+        // 面板控制
+        function togglePanel() {
+            const menu = safeGetElement('panelMenu');
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        function hidePanel() {
+            const menu = safeGetElement('panelMenu');
+            if (menu) {
+                menu.classList.remove('show');
+            }
+        }
+
+        // 显示欢迎故事
+        function showWelcomeStory() {
+            const storyLines = [
+                { text: "山海经灵境斗宠录", type: "title" },
+                { text: "在这个由世界树支撑的神话世界中，古老的传说正在苏醒。", type: "normal" },
+                { text: "你站在世界树的根部，感受着来自不同方向的神秘召唤。", type: "normal" },
+                { text: "微风轻抚过你的脸庞，带来了远古时代的记忆碎片。", type: "emphasis" },
+                { text: "\"年轻的旅者，你准备好开始这段奇妙的旅程了吗？\"", type: "dialogue" },
+                { text: "请选择你感应到的力量：", type: "normal" }
+            ];
+
+            displayStoryLines(storyLines, () => {
+                showInitialChoices();
+            });
+        }
+
+        // 显示故事行
+        function displayStoryLines(lines, callback) {
+            const container = safeGetElement('storyContent');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            lines.forEach((line, index) => {
+                setTimeout(() => {
+                    const lineElement = document.createElement('div');
+                    lineElement.className = `story-line ${line.type}`;
+                    lineElement.textContent = line.text;
+                    container.appendChild(lineElement);
+                    
+                    setTimeout(() => {
+                        lineElement.classList.add('show');
+                    }, 100);
+                    
+                    if (index === lines.length - 1 && callback) {
+                        setTimeout(callback, 1000);
+                    }
+                }, index * 800);
+            });
+        }
+
+        // 显示初始选择
+        function showInitialChoices() {
+            const choices = [
+                { text: "🐉 我听到了古老的龙吟声，仿佛来自时间的深处...", action: () => startPetGeneration('dragon') },
+                { text: "🌿 我感受到了自然的呼唤，花草树木都在诉说生命的奥秘...", action: () => startPetGeneration('nature') },
+                { text: "✨ 我看见了星空中的幻象，无数的可能性在虚空中闪烁...", action: () => startPetGeneration('mystic') }
+            ];
+
+            showChoices(choices);
+        }
+
+        // 显示选择
+        function showChoices(choices) {
+            const container = safeGetElement('choicesContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-item';
+                button.textContent = choice.text;
+                button.addEventListener('click', choice.action);
+                container.appendChild(button);
+            });
+            
+            setTimeout(() => {
+                container.classList.add('show');
+            }, 500);
+        }
+
+        // 隐藏选择
+        function hideChoices() {
+            const container = safeGetElement('choicesContainer');
+            if (container) {
+                container.classList.remove('show');
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 500);
+            }
+        }
+
+        // 开始宠物生成
+        function startPetGeneration(type) {
+            hideChoices();
+            
+            const generationLines = [
+                { text: "你的选择引起了世界树的共鸣...", type: "normal" },
+                { text: "神秘的光芒开始在你周围聚集。", type: "emphasis" },
+                { text: "\"正在为你寻找最合适的伙伴...\"", type: "dialogue" },
+                { text: "请稍等，奇迹即将降临。", type: "loading" }
+            ];
+
+            displayStoryLines(generationLines, () => {
+                setTimeout(() => {
+                    generatePet(type);
+                }, 2000);
+            });
+        }
+
+        // 生成宠物
+        async function generatePet(type) {
+            try {
+                const pet = await mockPetGeneration(type);
+                gameState.currentPet = pet;
+                updatePetDisplay();
+                
+                showPetIntroduction(pet);
+                
+            } catch (error) {
+                showError('生成宠物时发生错误，请重试。');
+            }
+        }
+
+        // 模拟宠物生成
+        async function mockPetGeneration(type) {
+            const petData = {
+                dragon: {
+                    species: ['火龙', '冰龙', '雷龙', '暗龙', '光龙'],
+                    attributes: ['烈焰', '寒冰', '雷鸣', '暗影', '圣光']
+                },
+                nature: {
+                    species: ['木精', '花仙', '树灵', '草妖', '藤怪'],
+                    attributes: ['生机', '治愈', '成长', '繁茂', '新生']
+                },
+                mystic: {
+                    species: ['幻灵', '星兽', '虚影', '梦魇', '时灵'],
+                    attributes: ['幻象', '星光', '虚无', '梦境', '时间']
+                }
+            };
+
+            const data = petData[type] || petData.nature;
+            const species = data.species[Math.floor(Math.random() * data.species.length)];
+            const attribute = data.attributes[Math.floor(Math.random() * data.attributes.length)];
+            
+            return {
+                name: `${species}·${attribute}`,
+                species: species,
+                attribute: attribute,
+                level: 1,
+                totalExp: 0,
+                bond: 10,
+                stats: {
+                    hp: 45 + Math.floor(Math.random() * 20),
+                    attack: 15 + Math.floor(Math.random() * 10),
+                    defense: 10 + Math.floor(Math.random() * 8),
+                    speed: 8 + Math.floor(Math.random() * 6),
+                    magic: 12 + Math.floor(Math.random() * 8)
+                }
+            };
+        }
+
+        // 显示宠物介绍
+        function showPetIntroduction(pet) {
+            const introLines = [
+                { text: `世界树的光芒闪烁，${pet.name} 出现在你面前！`, type: "title" },
+                { text: `这只${pet.species}身披${pet.attribute}之力的光辉，眼中闪烁着智慧的光芒。`, type: "normal" },
+                { text: `它轻轻蹭了蹭你的手，似乎已经认可了你这个伙伴。`, type: "emphasis" },
+                { text: `\"恭喜你，年轻的训练师。这将是一段美妙旅程的开始。\"`, type: "dialogue" },
+                { text: "现在，你们可以开始冒险了。", type: "normal" }
+            ];
+
+            displayStoryLines(introLines, () => {
+                showMainChoices();
+            });
+        }
+
+        // 显示主要选择
+        function showMainChoices() {
+            const choices = [
+                { text: "🏔️ 开始探索山海经的神秘世界", action: () => startStoryMode('shanhai_exploration') },
+                { text: "💝 与宠物进行深度交流和训练", action: () => startStoryMode('pet_growth') },
+                { text: "⚔️ 寻找其他训练师进行战斗", action: () => startStoryMode('battle_scenarios') },
+                { text: "🌸 在此地休息，观察周围的环境", action: () => showRestScene() }
+            ];
+
+            showChoices(choices);
+        }
+
+        // 开始故事模式
+        async function startStoryMode(storyType) {
+            if (gameState.isLoading) return;
+            
+            gameState.isLoading = true;
+            hideChoices();
+            
+            try {
+                showLoading('正在准备剧情...');
+                
+                const response = await fetch('/api/story-growth/stories/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: gameState.currentPlayerId,
+                        storyType: storyType,
+                        context: {
+                            petName: gameState.currentPet.name,
+                            level: gameState.currentPet.level,
+                            bond: gameState.currentPet.bond,
+                            courage: 3,
+                            wisdom: 2
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStoryNode(data.result.currentNode);
+                } else {
+                    showError('剧情开始失败: ' + (data.message || '未知错误'));
+                    showMainChoices();
+                }
+            } catch (error) {
+                showError('连接服务器失败，请检查网络连接。');
+                showMainChoices();
+            } finally {
+                gameState.isLoading = false;
+            }
+        }
+
+        // 显示故事节点
+        function displayStoryNode(node) {
+            const storyLines = [
+                { text: node.title, type: "title" },
+                { text: node.description, type: "normal" }
+            ];
+
+            displayStoryLines(storyLines, () => {
+                if (node.choices && node.choices.length > 0) {
+                    const choices = node.choices.slice(0, 3).map(choice => ({
+                        text: choice.text,
+                        action: () => makeStoryChoice(choice.id)
+                    }));
+                    showChoices(choices);
+                } else {
+                    setTimeout(() => {
+                        showMainChoices();
+                    }, 2000);
+                }
+            });
+        }
+
+        // 做出故事选择
+        async function makeStoryChoice(choiceId) {
+            if (gameState.isLoading) return;
+            
+            gameState.isLoading = true;
+            hideChoices();
+            
+            try {
+                showLoading('正在处理你的选择...');
+                
+                const response = await fetch('/api/story-growth/stories/choice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: gameState.currentPlayerId,
+                        choiceId: choiceId
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.result.effects) {
+                        applyEffects(data.result.effects);
+                    }
+                    
+                    if (data.result.nextNode) {
+                        displayStoryNode(data.result.nextNode);
+                    } else {
+                        const endLines = [
+                            { text: "这段冒险告一段落。", type: "normal" },
+                            { text: "但你们的旅程才刚刚开始...", type: "emphasis" }
+                        ];
+                        displayStoryLines(endLines, () => {
+                            showMainChoices();
+                        });
+                    }
+                } else {
+                    showError('选择处理失败: ' + (data.reason || data.message || '未知错误'));
+                    showMainChoices();
+                }
+            } catch (error) {
+                showError('连接服务器失败，请检查网络连接。');
+                showMainChoices();
+            } finally {
+                gameState.isLoading = false;
+            }
+        }
+
+        // 应用效果
+        function applyEffects(effects) {
+            if (effects.exp) {
+                gameState.currentPet.totalExp += effects.exp;
+                showMessage(`获得了${effects.exp}点经验值！`);
+            }
+            if (effects.bond) {
+                gameState.currentPet.bond += effects.bond;
+                showMessage(`羁绊值增加了${effects.bond}点！`);
+            }
+            updatePetDisplay();
+        }
+
+        // 显示休息场景
+        function showRestScene() {
+            const restLines = [
+                { text: "你和你的伙伴在世界树下找了个舒适的地方休息。", type: "normal" },
+                { text: "微风轻抚，带来了远方的花香。", type: "emphasis" },
+                { text: `${gameState.currentPet.name}蜷缩在你身边，发出满足的轻鸣。`, type: "normal" },
+                { text: "这样的宁静时光让你们的羁绊更加深厚。", type: "emphasis" }
+            ];
+
+            displayStoryLines(restLines, () => {
+                gameState.currentPet.bond += 1;
+                updatePetDisplay();
+                setTimeout(() => {
+                    showMainChoices();
+                }, 2000);
+            });
+        }
+
+        // 添加经验值
+        async function addExperience() {
+            if (gameState.currentPet.level === 0) {
+                showMessage('请先获得宠物！');
+                return;
+            }
+
+            try {
+                const expGained = 25 + Math.floor(Math.random() * 25);
+                gameState.currentPet.totalExp += expGained;
+                updatePetDisplay();
+                showMessage(`获得了${expGained}点经验值！`);
+            } catch (error) {
+                showMessage('添加经验失败');
+            }
+        }
+
+        // 检查进化
+        async function checkEvolution() {
+            if (gameState.currentPet.level === 0) {
+                showMessage('请先获得宠物！');
+                return;
+            }
+
+            if (gameState.currentPet.totalExp > 100) {
+                if (confirm('🔥 你的宠物可以进化了！是否立即进化？')) {
+                    evolvePet();
+                }
+            } else {
+                showMessage('暂时还不能进化，继续努力吧！');
+            }
+        }
+
+        // 执行进化
+        async function evolvePet() {
+            try {
+                showLoading('正在进化...');
+                
+                const oldName = gameState.currentPet.name;
+                const newName = gameState.currentPet.name + '·进化';
+                gameState.currentPet.name = newName;
+                gameState.currentPet.level += 1;
+                updatePetDisplay();
+                
+                const evolutionLines = [
+                    { text: "进化之光包围了你的伙伴！", type: "title" },
+                    { text: "在璀璨的光芒中，你的伙伴获得了新的力量！", type: "emphasis" },
+                    { text: `${oldName} 成功进化为 ${newName}！`, type: "normal" }
+                ];
+                
+                displayStoryLines(evolutionLines, () => {
+                    showMainChoices();
+                });
+            } catch (error) {
+                showMessage('进化失败');
+            }
+        }
+
+        // 查看宠物状态
+        async function viewPetStatus() {
+            if (gameState.currentPet.level === 0) {
+                showMessage('请先获得宠物！');
+                return;
+            }
+
+            const pet = gameState.currentPet;
+            let statusText = `=== ${pet.name} 详细状态 ===\n\n`;
+            statusText += `基本信息:\n`;
+            statusText += `- 名称: ${pet.name}\n`;
+            statusText += `- 种族: ${pet.species}\n`;
+            statusText += `- 等级: ${pet.level}\n`;
+            statusText += `- 属性: ${pet.attribute}\n\n`;
+            
+            statusText += `经验值:\n`;
+            statusText += `- 总经验: ${pet.totalExp}\n`;
+            statusText += `- 羁绊值: ${pet.bond}\n\n`;
+            
+            statusText += `能力值:\n`;
+            if (pet.stats) {
+                statusText += `- 生命: ${pet.stats.hp || 0}\n`;
+                statusText += `- 攻击: ${pet.stats.attack || 0}\n`;
+                statusText += `- 防御: ${pet.stats.defense || 0}\n`;
+                statusText += `- 速度: ${pet.stats.speed || 0}\n`;
+                statusText += `- 魔力: ${pet.stats.magic || 0}\n`;
+            }
+            
+            alert(statusText);
+        }
+
+        // 获取当前剧情
+        async function getCurrentStory() {
+            showMessage('当前没有进行中的剧情');
+        }
+
+        // 服务器状态检查
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                safeSetText('serverStatus', '正常');
+                const statusElement = safeGetElement('serverStatus');
+                if (statusElement) {
+                    statusElement.style.color = '#98fb98';
+                }
+            } catch (error) {
+                safeSetText('serverStatus', '离线');
+                const statusElement = safeGetElement('serverStatus');
+                if (statusElement) {
+                    statusElement.style.color = '#ff6b6b';
+                }
+            }
+        }
+
+        // 测试API
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/info');
+                const data = await response.json();
+                alert('API测试成功！\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                alert('API测试失败: ' + error.message);
+            }
+        }
+
+        // 更新宠物显示
+        function updatePetDisplay() {
+            safeSetText('petName', gameState.currentPet.name);
+            safeSetText('petLevel', gameState.currentPet.level);
+            safeSetText('petExp', gameState.currentPet.totalExp);
+            safeSetText('petBond', gameState.currentPet.bond);
+        }
+
+        // 工具函数
+        function showLoading(message) {
+            const container = safeGetElement('storyContent');
+            if (container) {
+                container.innerHTML = `<div class="story-line loading show">${message}</div>`;
+            }
+        }
+
+        function showMessage(message) {
+            const lines = [{ text: message, type: "emphasis" }];
+            displayStoryLines(lines);
+        }
+
+        function showError(message) {
+            const lines = [{ text: "错误: " + message, type: "normal" }];
+            displayStoryLines(lines);
+        }
+
+        function saveGame() {
+            localStorage.setItem('gameState', JSON.stringify(gameState));
+            showMessage('游戏已保存');
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('gameState');
+            if (saved) {
+                Object.assign(gameState, JSON.parse(saved));
+                updatePetDisplay();
+                showMessage('游戏已加载');
+            } else {
+                showMessage('没有找到保存的游戏');
+            }
+        }
+
+        function restartGame() {
+            if (confirm('确定要重新开始吗？当前进度将丢失。')) {
+                gameState.currentPet = {
+                    name: '未获得',
+                    species: '',
+                    level: 0,
+                    totalExp: 0,
+                    bond: 0,
+                    attribute: '',
+                    stats: {}
+                };
+                gameState.storyHistory = [];
+                updatePetDisplay();
+                showWelcomeStory();
+            }
+        }
+
+        function clearLog() {
+            const container = safeGetElement('storyContent');
+            if (container) {
+                container.innerHTML = '';
+            }
+            hideChoices();
+        }
+
+        // 定期检查服务器状态
+        setInterval(checkServerStatus, 30000);
+    </script>
+</body>
+</html>
