@@ -1,0 +1,65 @@
+/* 全局基础样式 */
+:root {
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  --scene-aura-1: rgba(0, 0, 0, 0);
+  --scene-aura-2: rgba(0, 0, 0, 0);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
+
+/* 场景氛围层动画 */
+.scene-aura {
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* 文字打字机效果 */
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  border-right: 0.15em solid white;
+  white-space: nowrap;
+  animation: typewriter 2s steps(40) 1s forwards;
+}
