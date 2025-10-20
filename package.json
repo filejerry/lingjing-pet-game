@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "build": "echo 'Build completed'",
-    "vercel-build": "echo 'Vercel build completed'",
+    "dev:all": "concurrently \"npm run dev\" \"npm run mcp:dev\" \"cd client && npm run dev\"",
+    "mcp:dev": "cd server/mcp && npm run dev",
+    "mcp:start": "cd server/mcp && npm start",
+    "build": "cd client && npm run build",
+    "vercel-build": "cd client && npm run build",
     "test:supabase": "node scripts/test-supabase-connection.js",
     "migrate:supabase": "node scripts/migrate-to-supabase.js",
     "db:setup": "echo '请在Supabase SQL Editor中执行 scripts/supabase-schema.sql'"
@@ -31,12 +34,14 @@
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
     "pg": "^8.11.3",
+    "socket.io": "^4.7.4",
     "sqlite3": "^5.1.7",
     "uuid": "^13.0.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
