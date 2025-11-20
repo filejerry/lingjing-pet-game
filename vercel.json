@@ -9,6 +9,10 @@
     {
       "src": "public/**/*",
       "use": "@vercel/static"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -17,8 +21,20 @@
       "dest": "/src/app.js"
     },
     {
+      "src": "/socket.io/(.*)",
+      "dest": "/src/app.js"
+    },
+    {
       "src": "/health",
       "dest": "/src/app.js"
+    },
+    {
+      "src": "/v3/(.*)",
+      "dest": "/public/v3/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/public/v3/index.html"
     },
     {
       "src": "/(.*)",
